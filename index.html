@@ -1,0 +1,257 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>مسابقة شباب المستقبل الذكية</title>
+    <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;700;900&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --primary: #6366f1;
+            --secondary: #a855f7;
+            --bg: #0f172a;
+            --card-bg: #1e293b;
+            --text: #f8fafc;
+            --success: #22c55e;
+            --error: #ef4444;
+        }
+
+        body {
+            font-family: 'Cairo', sans-serif;
+            background-color: var(--bg);
+            color: var(--text);
+            margin: 0;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            overflow: hidden;
+        }
+
+        .container {
+            width: 90%;
+            max-width: 700px;
+            background: var(--card-bg);
+            padding: 2rem;
+            border-radius: 24px;
+            box-shadow: 0 20px 50px rgba(0,0,0,0.5);
+            position: relative;
+            border: 1px solid rgba(255,255,255,0.1);
+        }
+
+        /* شريط التقدم الفني */
+        .progress-container {
+            width: 100%;
+            height: 8px;
+            background: #334155;
+            border-radius: 10px;
+            margin-bottom: 2rem;
+            overflow: hidden;
+            display: none; /* مخفي في البداية */
+        }
+        #progress-bar {
+            height: 100%;
+            width: 0%;
+            background: linear-gradient(90deg, var(--primary), var(--secondary));
+            transition: width 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        .question-text {
+            font-size: 1.5rem;
+            font-weight: 700;
+            margin-bottom: 1.5rem;
+            text-align: center;
+            line-height: 1.6;
+        }
+
+        .options-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 15px;
+        }
+
+        .option-btn {
+            background: #334155;
+            border: 2px solid transparent;
+            padding: 15px;
+            border-radius: 12px;
+            color: white;
+            cursor: pointer;
+            font-size: 1.1rem;
+            transition: all 0.3s ease;
+            font-family: 'Cairo';
+        }
+
+        .option-btn:hover:not(:disabled) {
+            background: #475569;
+            transform: translateY(-3px);
+            border-color: var(--primary);
+        }
+
+        .option-btn.correct { background: var(--success) !important; }
+        .option-btn.wrong { background: var(--error) !important; }
+
+        /* وسائل المساعدة */
+        .helpers {
+            display: flex;
+            justify-content: center;
+            gap: 10px;
+            margin-top: 2rem;
+        }
+        .helper-btn {
+            background: #fbbf24;
+            color: #000;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 50px;
+            font-weight: bold;
+            cursor: pointer;
+            transition: 0.3s;
+        }
+        .helper-btn:disabled { opacity: 0.3; cursor: not-allowed; }
+
+        .stat-box {
+            text-align: center;
+            margin-bottom: 10px;
+            font-size: 0.9rem;
+            color: #94a3b8;
+        }
+    </style>
+</head>
+<body>
+
+<div class="container" id="game-container">
+    <div class="stat-box" id="stat-info">جاهز للمنافسة؟</div>
+    <div class="progress-container" id="progress-box">
+        <div id="progress-bar"></div>
+    </div>
+    
+    <div id="quiz-section">
+        <div class="question-text" id="question">اضغط ابدأ لبدء التحدي!</div>
+        <div class="options-grid" id="options">
+            </div>
+    </div>
+
+    <div class="helpers">
+        <button class="helper-btn" id="half-btn" onclick="useHalfHalf()">50/50</button>
+        <button class="helper-btn" id="audience-btn" onclick="useAudience()">استطلاع جمهور</button>
+    </div>
+</div>
+
+<script>
+// بنك الأسئلة (مثال بـ 5 أسئلة، حط الـ 200 سؤال بتوعك هنا)
+const allQuestions = [
+    { "question": "ما هو العلم الذي يدرس الزلازل؟", "options": ["السيزمولوجيا", "الجيولوجيا", "الأرصاد", "المناخ"], "correct": 0 },
+    { "question": "ما هي أصغر عظمة في جسم الإنسان؟", "options": ["الفخذ", "الركاب", "الترقوة", "الرسغ"], "correct": 1 },
+    // ... ضيف الـ 200 سؤال هنا بنفس التنسيق
+];
+
+let remainingQuestions = [];
+let currentQuestionIndex = 0;
+let score = 0;
+
+// نظام إدارة الأسئلة لعدم التكرار نهائياً
+function initGame() {
+    // جلب الأسئلة المتبقية من الذاكرة المحلية أو البدء من جديد
+    let saved = localStorage.getItem('kramlat_questions');
+    if (saved && JSON.parse(saved).length > 0) {
+        remainingQuestions = JSON.parse(saved);
+    } else {
+        remainingQuestions = [...allQuestions];
+    }
+    loadNextQuestion();
+}
+
+function loadNextQuestion() {
+    if (remainingQuestions.length === 0) {
+        alert("مبروك! خلصت كل الأسئلة.");
+        localStorage.removeItem('kramlat_questions');
+        location.reload();
+        return;
+    }
+
+    // إخفاء التقدم حتى يتم التفاعل (اختياري حسب طلبك)
+    // document.getElementById('progress-box').style.display = 'none';
+
+    // اختيار سؤال عشوائي
+    const randomIndex = Math.floor(Math.random() * remainingQuestions.length);
+    const qData = remainingQuestions[randomIndex];
+    
+    // تخزين السؤال الحالي وحذفه من المصفوفة
+    window.currentQ = qData;
+    window.currentIndexInRemaining = randomIndex;
+
+    // عرض السؤال
+    document.getElementById('question').innerText = qData.question;
+    const optionsDiv = document.getElementById('options');
+    optionsDiv.innerHTML = '';
+
+    qData.options.forEach((opt, index) => {
+        const btn = document.createElement('button');
+        btn.className = 'option-btn';
+        btn.innerText = opt;
+        btn.onclick = () => checkAnswer(index, btn);
+        optionsDiv.appendChild(btn);
+    });
+}
+
+function checkAnswer(selectedIndex, btn) {
+    const correctIndex = window.currentQ.correct;
+    const allBtns = document.querySelectorAll('.option-btn');
+    
+    // إظهار شريط التقدم فور الإجابة
+    document.getElementById('progress-box').style.display = 'block';
+    
+    if (selectedIndex === correctIndex) {
+        btn.classList.add('correct');
+        score++;
+    } else {
+        btn.classList.add('wrong');
+        allBtns[correctIndex].classList.add('correct');
+    }
+
+    // تعطيل الأزرار بعد الإجابة
+    allBtns.forEach(b => b.disabled = true);
+
+    // تحديث شريط التقدم
+    const total = allQuestions.length;
+    const solved = total - remainingQuestions.length + 1;
+    const progressPercent = (solved / total) * 100;
+    document.getElementById('progress-bar').style.width = progressPercent + '%';
+
+    // إزالة السؤال من القائمة وحفظ التقدم
+    remainingQuestions.splice(window.currentIndexInRemaining, 1);
+    localStorage.setItem('kramlat_questions', JSON.stringify(remainingQuestions));
+
+    // انتقال للسؤال التالي بعد ثانية ونصف
+    setTimeout(loadNextQuestion, 1500);
+}
+
+// وسيلة مساعدة: حذف إجابتين
+function useHalfHalf() {
+    const correct = window.currentQ.correct;
+    const btns = document.querySelectorAll('.option-btn');
+    let removed = 0;
+    
+    btns.forEach((btn, idx) => {
+        if (idx !== correct && removed < 2) {
+            btn.style.visibility = 'hidden';
+            removed++;
+        }
+    });
+    document.getElementById('half-btn').disabled = true;
+}
+
+// وسيلة مساعدة: استطلاع الجمهور
+function useAudience() {
+    const correct = window.currentQ.correct;
+    alert(`الجمهور يرجح أن الإجابة هي: ${window.currentQ.options[correct]}`);
+    document.getElementById('audience-btn').disabled = true;
+}
+
+// تشغيل اللعبة
+initGame();
+
+</script>
+</body>
+</html>
