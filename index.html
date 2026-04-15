@@ -1,850 +1,1013 @@
 <!DOCTYPE html>
+
 <html lang="ar" dir="rtl">
+
 <head>
+
     <meta charset="UTF-8">
+
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>مسابقة شباب المستقبل الذكية</title>
-    <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;700;900&display=swap" rel="stylesheet">
+
+    <title>Pattern Recovery Pro - المحلل الذكي</title>
+
     <style>
+
         :root {
-            --primary: #6366f1;
-            --secondary: #a855f7;
-            --bg: #0f172a;
-            --card-bg: #1e293b;
-            --text: #f8fafc;
-            --success: #22c55e;
-            --error: #ef4444;
+
+            --bg: #030712;
+
+            --card: #111827;
+
+            --primary: #3b82f6;
+
+            --accent: #10b981;
+
+            --danger: #ef4444;
+
+            --text: #f9fafb;
+
+            --sub-text: #9ca3af;
+
         }
+
+
 
         body {
-            font-family: 'Cairo', sans-serif;
+
+            font-family: 'Segoe UI', system-ui, sans-serif;
+
             background-color: var(--bg);
+
             color: var(--text);
+
             margin: 0;
+
+            padding: 10px;
+
             display: flex;
+
             justify-content: center;
-            align-items: center;
-            min-height: 100vh;
-            overflow: hidden;
+
         }
 
-        .container {
-            width: 90%;
-            max-width: 700px;
-            background: var(--card-bg);
-            padding: 2rem;
-            border-radius: 24px;
-            box-shadow: 0 20px 50px rgba(0,0,0,0.5);
-            position: relative;
-            border: 1px solid rgba(255,255,255,0.1);
-        }
 
-        /* شريط التقدم الفني */
-        .progress-container {
+
+        .main-grid {
+
             width: 100%;
-            height: 8px;
-            background: #334155;
-            border-radius: 10px;
-            margin-bottom: 2rem;
-            overflow: hidden;
-            display: none; /* مخفي في البداية */
-        }
-        #progress-bar {
-            height: 100%;
-            width: 0%;
-            background: linear-gradient(90deg, var(--primary), var(--secondary));
-            transition: width 0.5s cubic-bezier(0.4, 0, 0.2, 1);
-        }
 
-        .question-text {
-            font-size: 1.5rem;
-            font-weight: 700;
-            margin-bottom: 1.5rem;
-            text-align: center;
-            line-height: 1.6;
-        }
+            max-width: 1100px;
 
-        .options-grid {
             display: grid;
-            grid-template-columns: 1fr 1fr;
-            gap: 15px;
+
+            grid-template-columns: 1fr;
+
+            gap: 20px;
+
         }
 
-        .option-btn {
-            background: #334155;
-            border: 2px solid transparent;
-            padding: 15px;
-            border-radius: 12px;
-            color: white;
-            cursor: pointer;
-            font-size: 1.1rem;
-            transition: all 0.3s ease;
-            font-family: 'Cairo';
+
+
+        @media (min-width: 1024px) {
+
+            .main-grid { grid-template-columns: 400px 1fr; }
+
+            .full-row { grid-column: span 2; }
+
         }
 
-        .option-btn:hover:not(:disabled) {
-            background: #475569;
-            transform: translateY(-3px);
-            border-color: var(--primary);
+
+
+        .card {
+
+            background: var(--card);
+
+            border-radius: 24px;
+
+            padding: 24px;
+
+            border: 1px solid #1f2937;
+
+            box-shadow: 0 25px 50px -12px rgba(0,0,0,0.5);
+
         }
 
-        .option-btn.correct { background: var(--success) !important; }
-        .option-btn.wrong { background: var(--error) !important; }
 
-        /* وسائل المساعدة */
-        .helpers {
-            display: flex;
-            justify-content: center;
-            gap: 10px;
-            margin-top: 2rem;
+
+        h2 { font-size: 1.25rem; margin-top: 0; display: flex; align-items: center; gap: 10px; color: var(--primary); }
+
+
+
+        /* لوحة الرسم */
+
+        #board-wrapper {
+
+            position: relative;
+
+            width: 320px;
+
+            height: 320px;
+
+            margin: 20px auto;
+
+            background: radial-gradient(circle, #1e293b 0%, #0f172a 100%);
+
+            border-radius: 20px;
+
+            touch-action: none;
+
+            box-shadow: inset 0 0 20px rgba(0,0,0,0.5);
+
         }
-        .helper-btn {
-            background: #fbbf24;
-            color: #000;
-            border: none;
-            padding: 10px 20px;
-            border-radius: 50px;
-            font-weight: bold;
-            cursor: pointer;
+
+
+
+        canvas { position: absolute; top: 0; left: 0; z-index: 20; }
+
+
+
+        .dot {
+
+            position: absolute;
+
+            width: 16px;
+
+            height: 16px;
+
+            background: #4b5563;
+
+            border-radius: 50%;
+
+            transform: translate(-50%, -50%);
+
+            z-index: 5;
+
             transition: 0.3s;
-        }
-        .helper-btn:disabled { opacity: 0.3; cursor: not-allowed; }
 
-        .stat-box {
-            text-align: center;
-            margin-bottom: 10px;
-            font-size: 0.9rem;
-            color: #94a3b8;
         }
+
+
+
+        .dot.active { background: var(--primary); box-shadow: 0 0 20px var(--primary); }
+
+        
+
+        .step-number {
+
+            position: absolute;
+
+            color: white;
+
+            font-size: 12px;
+
+            font-weight: bold;
+
+            background: var(--accent);
+
+            width: 18px;
+
+            height: 18px;
+
+            border-radius: 50%;
+
+            display: flex;
+
+            align-items: center;
+
+            justify-content: center;
+
+            transform: translate(10px, -25px);
+
+            z-index: 30;
+
+            pointer-events: none;
+
+        }
+
+
+
+        /* الإحصائيات */
+
+        .analytics {
+
+            display: grid;
+
+            grid-template-columns: 1fr 1fr;
+
+            gap: 10px;
+
+            margin-bottom: 20px;
+
+        }
+
+
+
+        .stat-item {
+
+            background: #1f2937;
+
+            padding: 10px;
+
+            border-radius: 12px;
+
+            text-align: center;
+
+        }
+
+
+
+        .stat-val { font-size: 1.1rem; font-weight: bold; color: var(--accent); display: block; }
+
+        .stat-label { font-size: 0.7rem; color: var(--sub-text); }
+
+
+
+        /* أزرار */
+
+        .btn {
+
+            width: 100%;
+
+            padding: 14px;
+
+            border-radius: 12px;
+
+            border: none;
+
+            font-weight: bold;
+
+            cursor: pointer;
+
+            transition: 0.2s;
+
+            margin-bottom: 8px;
+
+            display: flex;
+
+            align-items: center;
+
+            justify-content: center;
+
+            gap: 8px;
+
+        }
+
+        .btn-primary { background: var(--primary); color: white; }
+
+        .btn-secondary { background: #374151; color: white; }
+
+        .btn-danger { background: #991b1b; color: white; }
+
+        .btn-ai { background: linear-gradient(45deg, #7c3aed, #2563eb); color: white; }
+
+        .btn:hover { filter: brightness(1.1); transform: translateY(-1px); }
+
+
+
+        /* سجل الأخطاء */
+
+        .history-grid {
+
+            display: grid;
+
+            grid-template-columns: repeat(auto-fill, minmax(90px, 1fr));
+
+            gap: 10px;
+
+            max-height: 250px;
+
+            overflow-y: auto;
+
+            padding: 5px;
+
+        }
+
+
+
+        .history-thumb {
+
+            background: #000;
+
+            border-radius: 10px;
+
+            border: 1px solid #374151;
+
+            padding: 5px;
+
+            position: relative;
+
+        }
+
+        .history-thumb canvas { position: static; }
+
+        .delete-hist { position: absolute; top: -5px; right: -5px; background: var(--danger); border-radius: 50%; width: 15px; height: 15px; font-size: 10px; cursor: pointer; display: flex; align-items: center; justify-content: center; }
+
+
+
+        /* ذكاء اصطناعي */
+
+        #ai-console {
+
+            margin-top: 15px;
+
+            padding: 15px;
+
+            background: #000;
+
+            border-radius: 12px;
+
+            border-right: 4px solid var(--primary);
+
+            font-size: 0.85rem;
+
+            line-height: 1.6;
+
+            display: none;
+
+        }
+
+
+
+        .loading-dots:after { content: '...'; animation: dots 1.5s steps(5, end) infinite; }
+
+        @keyframes dots { 0%, 20% { content: ''; } 40% { content: '.'; } 60% { content: '..'; } 80% { content: '...'; } }
+
     </style>
+
 </head>
+
 <body>
 
-<div class="container" id="game-container">
-    <div class="stat-box" id="stat-info">جاهز للمنافسة؟</div>
-    <div class="progress-container" id="progress-box">
-        <div id="progress-bar"></div>
-    </div>
+
+
+<div class="main-grid">
+
     
-    <div id="quiz-section">
-        <div class="question-text" id="question">اضغط ابدأ لبدء التحدي!</div>
-        <div class="options-grid" id="options">
+
+    <!-- عمود التحكم -->
+
+    <div class="card">
+
+        <h2>🛠️ وحدة التحكم</h2>
+
+        
+
+        <div id="board-wrapper">
+
+            <div id="dots-layer"></div>
+
+            <canvas id="mainCanvas" width="320" height="320"></canvas>
+
+        </div>
+
+
+
+        <div class="analytics">
+
+            <div class="stat-item">
+
+                <span class="stat-label">تعقيد النمط</span>
+
+                <span id="complexity-val" class="stat-val">0%</span>
+
             </div>
+
+            <div class="stat-item">
+
+                <span class="stat-label">نقاط لم تُلمس</span>
+
+                <span id="untouched-val" class="stat-val">9</span>
+
+            </div>
+
+        </div>
+
+
+
+        <div id="status-alert" style="color:var(--danger); font-size: 0.8rem; text-align: center; min-height: 20px; margin-bottom: 5px;"></div>
+
+
+
+        <button class="btn btn-primary" onclick="recordAttempt()">❌ تسجيل كمحاولة خاطئة</button>
+
+        <button class="btn btn-secondary" onclick="resetBoard()">🧹 مسح اللوحة</button>
+
+        <button class="btn btn-ai" onclick="consultAi()">🤖 تحليل الذكاء الاصطناعي</button>
+
+        
+
+        <div id="ai-console"></div>
+
     </div>
 
-    <div class="helpers">
-        <button class="helper-btn" id="half-btn" onclick="useHalfHalf()">50/50</button>
-        <button class="helper-btn" id="audience-btn" onclick="useAudience()">استطلاع جمهور</button>
+
+
+    <!-- عمود البيانات -->
+
+    <div class="card">
+
+        <h2>🕵️ تحليل المحاولات الخاطئة</h2>
+
+        <div id="history-container" class="history-grid">
+
+            <!-- سيتم ملؤه بواسطة JS -->
+
+        </div>
+
+
+
+        <h2 style="margin-top:30px;">💡 احتمالات مقترحة (بناءً على النقص)</h2>
+
+        <p style="font-size:0.75rem; color:var(--sub-text)">يقوم النظام بتوليد أنماط تركز على النقاط التي نادراً ما استخدمتها في محاولاتك السابقة.</p>
+
+        <div id="suggestions-grid" class="history-grid" style="max-height: 400px;">
+
+            <!-- اقتراحات ذكية -->
+
+        </div>
+
     </div>
+
+
+
 </div>
 
+
+
 <script>
-// بنك الأسئلة (مثال بـ 5 أسئلة، حط الـ 200 سؤال بتوعك هنا)
-const allQuestions = [
-  { "question": "ما هو العلم الذي يدرس الزلازل؟", "options": ["السيزمولوجيا", "الجيولوجيا", "الأرصاد", "المناخ"], "correct": 0 },
-  { "question": "ما هي أصغر عظمة في جسم الإنسان؟", "options": ["الفخذ", "الركاب", "الترقوة", "الرسغ"], "correct": 1 },
-  { "question": "ما هو الحيوان الذي يلقب بسفينة الصحراء؟", "options": ["الحصان", "الجمل", "الفيل", "الزرافة"], "correct": 1 },
-  { "question": "ما هو لون قميص متصدر سباق طواف فرنسا؟", "options": ["الأحمر", "الأصفر", "الأخضر", "الأزرق"], "correct": 1 },
-  { "question": "كم عدد ألوان قوس قزح؟", "options": ["5", "6", "7", "8"], "correct": 2 },
-  { "question": "ما هو الشيء الذي له أسنان ولا يعض؟", "options": ["المنشار", "المشط", "السكين", "المقص"], "correct": 1 },
-  { "question": "ما هو الكوكب الأحمر؟", "options": ["المريخ", "زحل", "المشتري", "عطارد"], "correct": 0 },
-  { "question": "ما هي عاصمة اليابان؟", "options": ["بكين", "سيول", "طوكيو", "مانيلا"], "correct": 2 },
-  { "question": "ما هو الطائر الذي يتكلم؟", "options": ["الغراب", "الهدهد", "الببغاء", "النسر"], "correct": 2 },
-  { "question": "كم عدد لاعبي فريق كرة القدم؟", "options": ["9", "10", "11", "12"], "correct": 2 },
-  { "question": "ما هو الشيء الذي يكسر إذا نطقنا اسمه؟", "options": ["الزجاج", "الوعد", "الصمت", "الثلج"], "correct": 2 },
-  { "question": "ما هو أطول نهر في العالم؟", "options": ["الأمازون", "النيل", "المسيسيبي", "الدانوب"], "correct": 1 },
-  { "question": "ما هي أكبر قارة في العالم؟", "options": ["أفريقيا", "آسيا", "أوروبا", "أستراليا"], "correct": 1 },
-  { "question": "ما هو الغاز الذي تتنفسه النباتات؟", "options": ["الأكسجين", "ثاني أكسيد الكربون", "النيتروجين", "الهيدروجين"], "correct": 1 },
-  { "question": "من هو مخترع المصباح الكهربائي؟", "options": ["نيوتن", "أديسون", "أينشتاين", "بيل"], "correct": 1 },
-  { "question": "ما هو أصغر كوكب في المجموعة الشمسية؟", "options": ["عطارد", "بلوتو", "المريخ", "الزهرة"], "correct": 0 },
-  { "question": "ما هي المادة التي تشكل 70% من جسم الإنسان؟", "options": ["الدم", "العظام", "الماء", "البروتين"], "correct": 2 },
-  { "question": "في أي دولة تقع الأهرامات؟", "options": ["المكسيك", "مصر", "العراق", "السودان"], "correct": 1 },
-  { "question": "ما هو أصلب مادة طبيعية على وجه الأرض؟", "options": ["الحديد", "الذهب", "الألماس", "النحاس"], "correct": 2 },
-  { "question": "كم عدد ولايات أمريكا؟", "options": ["48", "50", "52", "60"], "correct": 1 },
-  { "question": "ما هي عاصمة مصر؟", "options": ["الإسكندرية", "القاهرة", "أسوان", "الأقصر"], "correct": 1 },
-  { "question": "ما هو أسرع حيوان بري؟", "options": ["النمر", "الفهد", "الأسد", "الذئب"], "correct": 1 },
-  { "question": "كم عدد كواكب المجموعة الشمسية؟", "options": ["7", "8", "9", "10"], "correct": 1 },
-  { "question": "ما هو الكوكب الأقرب للشمس؟", "options": ["الزهرة", "الأرض", "عطارد", "المريخ"], "correct": 2 },
-  { "question": "ما هو الشيء الذي يمشي بلا أرجل؟", "options": ["السحاب", "الساعة", "النهر", "كل ما سبق"], "correct": 3 },
-  { "question": "ما هو المعدن السائل في درجة حرارة الغرفة؟", "options": ["القصدير", "الزئبق", "الرصاص", "الألومنيوم"], "correct": 1 },
-  { "question": "كم عدد أسنان الإنسان البالغ؟", "options": ["28", "30", "32", "34"], "correct": 2 },
-  { "question": "ما هي فصيلة الدم التي تسمى المعطي العام؟", "options": ["A", "B", "AB", "O-"], "correct": 3 },
-  { "question": "ما هو أكبر عضو في جسم الإنسان؟", "options": ["الكبد", "الرئة", "الجلد", "القلب"], "correct": 2 },
-  { "question": "ما هو الهرمون المسؤول عن السكر في الدم؟", "options": ["الأدرينالين", "الأنسولين", "الثايروكسين", "الكورتيزول"], "correct": 1 },
-  { "question": "من هو مكتشف أمريكا؟", "options": ["كولومبوس", "ماجلان", "فاسكو دي جاما", "نابليون"], "correct": 0 },
-  { "question": "في أي عام بدأت الحرب العالمية الأولى؟", "options": ["1910", "1914", "1918", "1939"], "correct": 1 },
-  { "question": "ما هي أصغر دولة في العالم؟", "options": ["موناكو", "سان مارينو", "الفاتيكان", "البحرين"], "correct": 2 },
-  { "question": "ما هو أعمق محيط في العالم؟", "options": ["الأطلسي", "الهندي", "الهادئ", "المتجمد"], "correct": 2 },
-  { "question": "ما هي عاصمة أستراليا؟", "options": ["سيدني", "ميلبورن", "كانبرا", "برث"], "correct": 2 },
-  { "question": "من هو القائد الذي فتح الأندلس؟", "options": ["عقبة بن نافع", "طارق بن زياد", "خالد بن الوليد", "صلاح الدين"], "correct": 1 },
-  { "question": "ما هو العلم الذي يدرس النجوم؟", "options": ["الجيولوجيا", "الفلك", "الفيزياء", "الكيمياء"], "correct": 1 },
-  { "question": "ما هي عاصمة فرنسا؟", "options": ["مارسيليا", "ليون", "باريس", "كان"], "correct": 2 },
-  { "question": "ما هو أثمن معدن في العالم؟", "options": ["الذهب", "الروديوم", "البلاتين", "الفضة"], "correct": 1 },
-  { "question": "ما هي لغة البرازيل الرسمية؟", "options": ["الإسبانية", "البرتغالية", "الإنجليزية", "الفرنسية"], "correct": 1 },
-  { "question": "كم عدد قلوب الأخطبوط؟", "options": ["1", "2", "3", "4"], "correct": 2 },
-  { "question": "ما هو الكائن الذي ينام وعيناه مفتوحتان؟", "options": ["الأسد", "السمك", "البومة", "الأفعى"], "correct": 1 },
-  { "question": "ما هي القوة التي تجذبنا للأرض؟", "options": ["المغناطيسية", "الجاذبية", "الكهربائية", "النووية"], "correct": 1 },
-  { "question": "كم عدد صمامات القلب؟", "options": ["2", "3", "4", "5"], "correct": 2 },
-  { "question": "ما هو أكبر حيوان في العالم؟", "options": ["الفيل", "الزرافة", "الحوت الأزرق", "القرش الأبيض"], "correct": 2 },
-  { "question": "ما هو الطائر الذي يضع أكبر بيضة؟", "options": ["النسر", "النعامة", "البجعة", "البطريق"], "correct": 1 },
-  { "question": "في أي قارة تقع صحراء ناميب؟", "options": ["آسيا", "أفريقيا", "أستراليا", "أمريكا الجنوبية"], "correct": 1 },
-  { "question": "ما هو أعلى جبل في العالم؟", "options": ["كيليمنجارو", "إيفرست", "أطلس", "مون بلان"], "correct": 1 },
-  { "question": "ما هي الدولة الأكثر سكاناً حالياً؟", "options": ["الصين", "الهند", "أمريكا", "إندونيسيا"], "correct": 1 },
-  { "question": "ما هو البحر الذي يفصل أفريقيا عن أوروبا؟", "options": ["البحر الأحمر", "البحر المتوسط", "بحر العرب", "بحر القزوين"], "correct": 1 },
-  { "question": "ما هي بلاد الرافدين؟", "options": ["مصر", "سوريا", "العراق", "الأردن"], "correct": 2 },
-  { "question": "أين تقع مدينة الدار البيضاء؟", "options": ["الجزائر", "تونس", "المغرب", "ليبيا"], "correct": 2 },
-  { "question": "ما هو أكبر بلد مساحة؟", "options": ["كندا", "الصين", "روسيا", "أمريكا"], "correct": 2 },
-  { "question": "ما هي أرض الألف بحيرة؟", "options": ["السويد", "النرويج", "فنلندا", "أيسلندا"], "correct": 2 },
-  { "question": "من مخترع الهاتف؟", "options": ["أديسون", "جراهام بيل", "تيسلا", "ماركوني"], "correct": 1 },
-  { "question": "من هو صاحب لقب سيف الله المسلول؟", "options": ["عمر بن الخطاب", "خالد بن الوليد", "حمزة بن عبدالمطلب", "علي بن أبي طالب"], "correct": 1 },
-  { "question": "في أي عام انتهت الحرب العالمية الثانية؟", "options": ["1940", "1945", "1950", "1960"], "correct": 1 },
-  { "question": "ما هي عاصمة إيطاليا؟", "options": ["ميلانو", "فينيسيا", "روما", "نابولي"], "correct": 2 },
-  { "question": "من رسم الموناليزا؟", "options": ["بيكاسو", "دا فينشي", "مايكل أنجلو", "فان جوخ"], "correct": 1 },
-  { "question": "ما هي عاصمة كندا؟", "options": ["تورونتو", "مونتريال", "أوتاوا", "فانكوفر"], "correct": 2 },
-  { "question": "ما هي العملة المستخدمة في اليابان؟", "options": ["اليوان", "الين", "الدولار", "اليورو"], "correct": 1 },
-  { "question": "ما هو أكبر خليج في العالم؟", "options": ["خليج العقبة", "خليج السويس", "خليج المكسيك", "الخليج العربي"], "correct": 2 },
-  { "question": "من هو أول رائد فضاء؟", "options": ["أرمسترونج", "يوري غاغارين", "بينس ألدرين", "جون جلين"], "correct": 1 },
-  { "question": "ما هي عاصمة العراق؟", "options": ["البصرة", "الموصل", "بغداد", "أربيل"], "correct": 2 },
-  { "question": "من هو مؤسس علم الجبر؟", "options": ["ابن سينا", "الخوارزمي", "الرازي", "ابن الهيثم"], "correct": 1 },
-  { "question": "ما هي الثورة التي قامت عام 1789؟", "options": ["الأمريكية", "الفرنسية", "الروسية", "الصناعية"], "correct": 1 },
-  { "question": "ما هو أقدم خط في التاريخ؟", "options": ["الهيروغليفي", "المسماري", "الفينيقي", "العربي"], "correct": 1 },
-  { "question": "من هو الرحالة العربي الشهير؟", "options": ["ابن بطوطة", "ماركو بولو", "كولومبوس", "ماجلان"], "correct": 0 },
-  { "question": "ما هي عاصمة الأرجنتين؟", "options": ["برازيليا", "سانتياغو", "بوينس آيرس", "ليما"], "correct": 2 },
-  { "question": "كم عدد حلقات العلم الأولمبي؟", "options": ["4", "5", "6", "7"], "correct": 1 },
-  { "question": "ما هي رياضة الضربة القاضية؟", "options": ["المصارعة", "الكاراتيه", "الملاكمة", "الجودو"], "correct": 2 },
-  { "question": "ما هي مدة مباراة كرة القدم؟", "options": ["80", "90", "100", "120"], "correct": 1 },
-  { "question": "ما هي اللعبة التي تسمى رياضة الملوك؟", "options": ["الجولف", "التنس", "الفروسية", "البولو"], "correct": 1 },
-  { "question": "ما هو النادي الملقب بالمرنغي؟", "options": ["برشلونة", "ميلان", "ريال مدريد", "بايرن ميونخ"], "correct": 2 },
-  { "question": "كم عدد أوتار الجيتار؟", "options": ["4", "5", "6", "7"], "correct": 2 },
-  { "question": "أين أقيم كأس العالم 2022؟", "options": ["البرازيل", "روسيا", "قطر", "المغرب"], "correct": 2 },
-  { "question": "ما هي أطول سباقات الجري؟", "options": ["100 متر", "الماراثون", "التتابع", "الموانع"], "correct": 1 },
-  { "question": "من هو الجوهرة السوداء؟", "options": ["مارادونا", "ميسي", "بيليه", "رونالدو"], "correct": 2 },
-  { "question": "كم عدد مفاتيح البيانو؟", "options": ["77", "88", "99", "100"], "correct": 1 },
-  { "question": "كم عدد لاعبي فريق كرة السلة؟", "options": ["5", "6", "11", "7"], "correct": 0 },
-  { "question": "ما هي رياضة السومو؟", "options": ["صينية", "يابانية", "كورية", "تايلاندية"], "correct": 1 },
-  { "question": "من فاز بكأس العالم 2022؟", "options": ["فرنسا", "كرواتيا", "الأرجنتين", "المغرب"], "correct": 2 },
-  { "question": "ما هي الرياضة التي تستخدم الريشة؟", "options": ["تنس الطاولة", "تنس الريشة", "الاسكواش", "الجولف"], "correct": 1 },
-  { "question": "ما هو الشيء الذي يزيد كلما نقص؟", "options": ["العمر", "الحفرة", "المال", "العلم"], "correct": 1 },
-  { "question": "ما هي لغة النمسا؟", "options": ["النمساوية", "الألمانية", "الفرنسية", "الإيطالية"], "correct": 1 },
-  { "question": "كم عدد قلوب الإنسان؟", "options": ["1", "2", "3", "4"], "correct": 0 },
-  { "question": "ما هو الغاز الذي يساعد على الاشتعال؟", "options": ["النيتروجين", "الأكسجين", "الهيدروجين", "الأرجون"], "correct": 1 },
-  { "question": "ما هي عاصمة السعودية؟", "options": ["جدة", "مكة", "الرياض", "المدينة"], "correct": 2 },
-  { "question": "من كتب مسرحية هاملت؟", "options": ["شكسبير", "تولستوي", "موليير", "طه حسين"], "correct": 0 },
-  { "question": "ما هو العلم الذي يدرس طبقات الأرض؟", "options": ["البيولوجيا", "الجيولوجيا", "الفلك", "الفيزياء"], "correct": 1 },
-  { "question": "ما هو أكبر كوكب في المجموعة الشمسية؟", "options": ["زحل", "المشتري", "أورانوس", "الأرض"], "correct": 1 },
-  { "question": "من هو مخترع المذياع (الراديو)؟", "options": ["أديسون", "ماركوني", "تسلا", "بيل"], "correct": 1 },
-  { "question": "ما هي عاصمة إسبانيا؟", "options": ["برشلونة", "مدريد", "إشبيلية", "فالنسيا"], "correct": 1 },
-  { "question": "ما هو العنصر الكيميائي الذي رمزه Au؟", "options": ["الفضة", "النحاس", "الذهب", "الحديد"], "correct": 2 },
-  { "question": "كم عدد شهور السنة الميلادية؟", "options": ["10", "11", "12", "13"], "correct": 2 },
-  { "question": "ما هو الكوكب الذي له حلقات واضحة؟", "options": ["المريخ", "زحل", "المشتري", "نبتون"], "correct": 1 },
-  { "question": "ما هي عاصمة المغرب؟", "options": ["الرباط", "الدار البيضاء", "مراكش", "فاس"], "correct": 0 },
-  { "question": "ما هو الحيوان الذي يبدل جلده؟", "options": ["التمساح", "الأفعى", "السحلية", "الضفدع"], "correct": 1 },
-  { "question": "كم عدد أيام السنة الكبيسة؟", "options": ["364", "365", "366", "367"], "correct": 2 },
-  { "question": "ما هو العضو المسؤول عن توازن الجسم؟", "options": ["العين", "الأذن الوسطى", "القدم", "المخ"], "correct": 1 },
-  { "question": "ما هي الدولة التي تسمى بلاد الشمس المشرقة؟", "options": ["الصين", "اليابان", "كوريا", "تايلاند"], "correct": 1 },
-  { "question": "من هو مؤلف كتاب القانون في الطب؟", "options": ["الرازي", "ابن سينا", "ابن النفيس", "البيروني"], "correct": 1 },
-  { "question": "ما هو أسرع كوكب يدور حول الشمس؟", "options": ["عطارد", "الزهرة", "الأرض", "المريخ"], "correct": 0 },
-  { "question": "ما هي عاصمة الأردن؟", "options": ["إربد", "عمان", "الزرقاء", "العقبة"], "correct": 1 },
-  { "question": "كم عدد أذرع الأخطبوط؟", "options": ["6", "7", "8", "9"], "correct": 2 },
-  { "question": "ما هو الغاز الذي يستخدم في إطفاء الحرائق؟", "options": ["الأكسجين", "ثاني أكسيد الكربون", "الهيدروجين", "الهيليوم"], "correct": 1 },
-  { "question": "ما هي الدولة التي منحت أمريكا تمثال الحرية؟", "options": ["بريطانيا", "فرنسا", "ألمانيا", "إيطاليا"], "correct": 1 },
-  { "question": "من هو مخترع الديناميت؟", "options": ["نوبل", "نيوتن", "أينشتاين", "واط"], "correct": 0 },
-  { "question": "ما هي عاصمة تونس؟", "options": ["صفاقس", "تونس", "سوسة", "بنزرت"], "correct": 1 },
-  { "question": "ما هو الكوكب الملقب بتوأم الأرض؟", "options": ["المريخ", "الزهرة", "عطارد", "نبتون"], "correct": 1 },
-  { "question": "كم عدد القارات في العالم؟", "options": ["5", "6", "7", "8"], "correct": 2 },
-  { "question": "ما هي عاصمة لبنان؟", "options": ["طرابلس", "بيروت", "صيدا", "زحلة"], "correct": 1 },
-  { "question": "من هو القائد الذي هزم الصليبيين في حطين؟", "options": ["قطز", "بيبرس", "صلاح الدين", "نور الدين محمود"], "correct": 2 },
-  { "question": "ما هي عاصمة البرتغال؟", "options": ["بورتو", "لشبونة", "فارو", "ماديرا"], "correct": 1 },
-  { "question": "ما هو المعدن الذي يستخدم في صنع الطائرات لخفته؟", "options": ["الحديد", "النحاس", "الألومنيوم", "الرصاص"], "correct": 2 },
-  { "question": "كم عدد فقرات عنق الإنسان؟", "options": ["5", "6", "7", "8"], "correct": 2 },
-  { "question": "ما هي أصغر قارة في العالم؟", "options": ["أوروبا", "أفريقيا", "أستراليا", "أمريكا الجنوبية"], "correct": 2 },
-  { "question": "ما هي عاصمة اليونان؟", "options": ["روما", "أثينا", "بيروت", "أنقرة"], "correct": 1 },
-  { "question": "من هو مخترع السينما؟", "options": ["الأخوة لوميير", "أديسون", "والت ديزني", "تشابلن"], "correct": 0 },
-  { "question": "ما هي عاصمة الهند؟", "options": ["بومباي", "كلكتا", "نيودلهي", "مدراس"], "correct": 2 },
-  { "question": "ما هو الغاز الأخف وزناً؟", "options": ["الأكسجين", "الهيدروجين", "الهيليوم", "النيتروجين"], "correct": 1 },
-  { "question": "كم عدد العظام في جسم الإنسان البالغ؟", "options": ["200", "206", "210", "220"], "correct": 1 },
-  { "question": "ما هي عاصمة البرازيل؟", "options": ["ريو دي جانيرو", "ساو باولو", "برازيليا", "سالفادور"], "correct": 2 },
-  { "question": "من هو مؤلف رواية البؤساء؟", "options": ["فيكتور هوجو", "شكسبير", "تشارلز ديكنز", "بلزاك"], "correct": 0 },
-  { "question": "ما هي عاصمة روسيا؟", "options": ["سانت بطرسبرغ", "موسكو", "كازان", "سيبيريا"], "correct": 1 },
-  { "question": "ما هو الغاز الذي يحمي الأرض من الأشعة فوق البنفسجية؟", "options": ["الأكسجين", "الأوزون", "الميثان", "النيون"], "correct": 1 },
-  { "question": "كم عدد كرات التنس في بداية المباراة؟", "options": ["2", "3", "4", "6"], "correct": 1 },
-  { "question": "ما هي عاصمة تركيا؟", "options": ["إسطنبول", "أنقرة", "إزمير", "أنطاليا"], "correct": 1 },
-  { "question": "من هو العالم الذي اكتشف البنسلين؟", "options": ["باستور", "فليمنج", "نوبل", "إديسون"], "correct": 1 },
-  { "question": "ما هي عاصمة سويسرا؟", "options": ["جنيف", "زيورخ", "برن", "لوزان"], "correct": 2 },
-  { "question": "ما هو العنصر الذي يرمز له بالرمز Fe؟", "options": ["الذهب", "الفضة", "الحديد", "الرصاص"], "correct": 2 },
-  { "question": "ما هي عاصمة المانيا؟", "options": ["ميونخ", "فرانكفورت", "برلين", "هامبورغ"], "correct": 2 },
-  { "question": "كم عدد السور في القرآن الكريم؟", "options": ["110", "112", "114", "116"], "correct": 2 },
-  { "question": "من هو أول نبي؟", "options": ["نوح", "إبراهيم", "آدم", "عيسى"], "correct": 2 },
-  { "question": "ما هي عاصمة السودان؟", "options": ["أم درمان", "الخرطوم", "بورتسودان", "كسلا"], "correct": 1 },
-  { "question": "ما هو الحيوان الذي لا يشرب الماء طوال حياته؟", "options": ["الجمل", "الكنغر البري", "اليربوع", "الأفعى"], "correct": 1 },
-  { "question": "ما هي أكبر جزيرة في العالم؟", "options": ["مدغشقر", "جرينلاند", "قبرص", "صقلية"], "correct": 1 },
-  { "question": "من هو مؤسس الدولة الأموية؟", "options": ["عمر بن عبدالعزيز", "معاوية بن أبي سفيان", "عبدالملك بن مروان", "يزيد بن معاوية"], "correct": 1 },
-  { "question": "ما هي عاصمة سوريا؟", "options": ["حلب", "حمص", "دمشق", "اللاذقية"], "correct": 2 },
-  { "question": "كم عدد ألوان علم مصر؟", "options": ["2", "3", "4", "5"], "correct": 1 },
-  { "question": "ما هو أقرب نجم للأرض؟", "options": ["الشعرى اليمانية", "الشمس", "سهيل", "القطب"], "correct": 1 },
-  { "question": "من هو مخترع الطائرة؟", "options": ["الأخوان رايت", "دالتون", "فورد", "أديسون"], "correct": 0 },
-  { "question": "ما هي عاصمة الكويت؟", "options": ["الجهراء", "الكويت", "الأحمدي", "الفروانية"], "correct": 1 },
-  { "question": "ما هو أطول سور في العالم؟", "options": ["سور برلين", "سور الصين العظيم", "سور القلعة", "سور عكا"], "correct": 1 },
-  { "question": "كم عدد أجنحة النحلة؟", "options": ["2", "4", "6", "8"], "correct": 1 },
-  { "question": "ما هي عاصمة الإمارات؟", "options": ["دبي", "أبو ظبي", "الشارقة", "عجمان"], "correct": 1 },
-  { "question": "من هو مكتشف الدورة الدموية الكبرى؟", "options": ["ابن النفيس", "ويليام هارفي", "باستور", "أبقراط"], "correct": 1 },
-  { "question": "ما هي عاصمة قطر؟", "options": ["الخور", "الدوحة", "الوكرة", "الريان"], "correct": 1 },
-  { "question": "ما هو أندر فصائل الدم؟", "options": ["O+", "AB-", "O-", "Rh Null"], "correct": 3 },
-  { "question": "كم عدد فقرات العمود الفقري؟", "options": ["30", "33", "35", "40"], "correct": 1 },
-  { "question": "ما هي عاصمة البحرين؟", "options": ["المحرق", "المنامة", "الرفاع", "الحد"], "correct": 1 },
-  { "question": "من هو فاتح القسطنطينية؟", "options": ["سليم الأول", "محمد الفاتح", "سليمان القانوني", "بايزيد الأول"], "correct": 1 },
-  { "question": "ما هي عاصمة سلطنة عمان؟", "options": ["صلالة", "مسقط", "نزوى", "صحار"], "correct": 1 },
-  { "question": "ما هو أقوى عضلة في جسم الإنسان؟", "options": ["القلب", "الفخذ", "الرحم/الفك", "الساعد"], "correct": 2 },
-  { "question": "ما هو الحيوان الذي له أكبر ذاكرة؟", "options": ["الكلب", "الحصان", "الفيل", "الدلفين"], "correct": 2 },
-  { "question": "ما هي عاصمة ليبيا؟", "options": ["بنغازي", "طرابلس", "مصراتة", "سبها"], "correct": 1 },
-  { "question": "من هو الشاعر الملقب بأمير الشعراء؟", "options": ["المتنبي", "أحمد شوقي", "حافظ إبراهيم", "إيليا أبو ماضي"], "correct": 1 },
-  { "question": "ما هي عاصمة الجزائر؟", "options": ["وهران", "الجزائر", "قسنطينة", "عنابة"], "correct": 1 },
-  { "question": "ما هو الشيء الذي يحمل طعامه فوق رأسه؟", "options": ["النملة", "القلم", "الحمال", "الجمل"], "correct": 1 },
-  { "question": "كم عدد عيون النحلة؟", "options": ["2", "3", "5", "10"], "correct": 2 },
-  { "question": "ما هي عاصمة الصومال؟", "options": ["هرجيسا", "مقدشيو", "كيسمايو", "بيدوا"], "correct": 1 },
-  { "question": "من هو مكتشف الأشعة السينية (X-Ray)؟", "options": ["رونتجن", "كوري", "نيوتن", "أينشتاين"], "correct": 0 },
-  { "question": "ما هي عاصمة جيبوتي؟", "options": ["تاجورة", "جيبوتي", "أوبوك", "علي صبيح"], "correct": 1 },
-  { "question": "ما هو الكوكب الذي يسمى الكوكب الأزرق؟", "options": ["الأرض", "نبتون", "أورانوس", "المشتري"], "correct": 0 },
-  { "question": "كم عدد السجدات في القرآن الكريم؟", "options": ["10", "12", "15", "20"], "correct": 2 },
-  { "question": "ما هي عاصمة جزر القمر؟", "options": ["موروني", "دوموني", "فومبوني", "موتسامودو"], "correct": 0 },
-  { "question": "من هو أول من بنى الكعبة؟", "options": ["إبراهيم", "إسماعيل", "الملائكة", "آدم"], "correct": 2 },
-  { "question": "ما هي عاصمة فلسطين؟", "options": ["يافا", "حيفا", "القدس", "غزة"], "correct": 2 },
-  { "question": "ما هو الطائر الذي لا يطير؟", "options": ["النعامة", "الدجاجة", "البطريق", "كل ما سبق"], "correct": 3 },
-  { "question": "كم عدد أحرف اللغة العربية؟", "options": ["26", "28", "30", "32"], "correct": 1 },
-  { "question": "ما هي عاصمة موريتانيا؟", "options": ["نواذيبو", "نواكشوط", "روصو", "أطار"], "correct": 1 },
-  { "question": "من هو عميد الأدب العربي؟", "options": ["عباس العقاد", "طه حسين", "نجيب محفوظ", "مصطفى الرافعي"], "correct": 1 },
-  { "question": "ما هو الحيوان الذي يصاب بالحصبة كالإنسان؟", "options": ["الكلب", "القرد", "القط", "الفأر"], "correct": 1 },
-  { "question": "كم عدد القلوب لدى دودة الأرض؟", "options": ["1", "3", "5", "10"], "correct": 2 },
-  { "question": "ما هي عاصمة اليمن؟", "options": ["عدن", "تعز", "صنعاء", "الحديدة"], "correct": 2 },
-  { "question": "من هو مخترع الآلة الكاتبة؟", "options": ["شولز", "أديسون", "واط", "بيل"], "correct": 0 },
-  { "question": "ما هو أكبر بحر مغلق في العالم؟", "options": ["البحر الميت", "بحر قزوين", "البحر الأسود", "بحر آرال"], "correct": 1 },
-  { "question": "كم عدد أرجل العنكبوت؟", "options": ["6", "8", "10", "12"], "correct": 1 },
-  { "question": "ما هي عاصمة أفغانستان؟", "options": ["قندهار", "كابول", "هرات", "مزار شريف"], "correct": 1 },
-  { "question": "من هو مؤسس علم الوراثة؟", "options": ["داروين", "مندل", "باستور", "فليمنج"], "correct": 1 },
-  { "question": "ما هو الغاز المسبب لظاهرة الاحتباس الحراري؟", "options": ["الأكسجين", "ثاني أكسيد الكربون", "النيتروجين", "الهيليوم"], "correct": 1 },
-  { "question": "كم عدد اللترات من الدم في جسم الإنسان؟", "options": ["3-4", "5-6", "7-8", "9-10"], "correct": 1 },
-  { "question": "ما هي عاصمة إثيوبيا؟", "options": ["أديس أبابا", "هيرار", "جونددر", "أكسوم"], "correct": 0 },
-  { "question": "من هو صاحب لوحة العشاء الأخير؟", "options": ["دا فينشي", "بيكاسو", "رافاييل", "مايكل أنجلو"], "correct": 0 },
-  { "question": "ما هو العنصر الكيميائي الأكثر وفرة في الكون؟", "options": ["الأكسجين", "الهيدروجين", "الهيليوم", "النيتروجين"], "correct": 1 },
-  { "question": "كم عدد الكواكب الغازية؟", "options": ["2", "3", "4", "5"], "correct": 2 },
-  { "question": "ما هي عاصمة نيجيريا؟", "options": ["لاغوس", "أبوجا", "كانو", "إبادان"], "correct": 1 },
-  { "question": "من هو مخترع المحرك البخاري؟", "options": ["جيمس واط", "نيوتن", "أديسون", "فورد"], "correct": 0 },
-  { "question": "ما هو الحيوان الذي يتنفس من مؤخرته؟", "options": ["الضفدع", "السلحفاة", "الثعبان", "السرطان"], "correct": 1 },
-  { "question": "ما هي اللغة الأكثر انتشاراً في العالم (كلغة أم)؟", "options": ["الإنجليزية", "الإسبانية", "الماندرين (الصينية)", "العربية"], "correct": 2 },
-  { "question": "كم عدد خطوط الطول؟", "options": ["180", "360", "90", "120"], "correct": 1 },
-  { "question": "ما هي عاصمة ماليزيا؟", "options": ["كوالالمبور", "بينانغ", "جوهر بهرو", "لنكاوي"], "correct": 0 },
-  { "question": "من هو مكتشف قانون الطفو؟", "options": ["نيوتن", "أرشميدس", "فيثاغورس", "جاليلو"], "correct": 1 },
-  { "question": "ما هو أصغر طائر في العالم؟", "options": ["العصفور", "طنان النحل", "الببغاء الصغير", "الكناري"], "correct": 1 },
-  { "question": "ما هي عاصمة كوريا الجنوبية؟", "options": ["بوسان", "سيول", "إنشيون", "جيجو"], "correct": 1 },
-  { "question": "ما هو الحيوان الذي لا يمتلك صوتاً؟", "options": ["السمك", "الزرافة", "الأفعى", "الدلفين"], "correct": 1 },
-  { "question": "ما هو أعلى شلال في العالم؟", "options": ["نياجرا", "أنجل", "فيكتوريا", "إجوازو"], "correct": 1 },
-  { "question": "ما هي عاصمة النمسا؟", "options": ["سالزبورغ", "فيينا", "برلين", "زيورخ"], "correct": 1 },
-  { "question": "ما هو الكوكب الذي يمتلك أكبر عدد من الأقمار؟", "options": ["المشتري", "زحل", "نبتون", "المريخ"], "correct": 1 },
-  { "question": "ما هي أسرع حشرة في العالم؟", "options": ["الصرصور", "اليعسوب", "النحلة", "الذبابة"], "correct": 1 }
-  { "question": "ما هو الشيء الذي يحمل أثقالاً ولا يستطيع حمل مسمار؟", "options": ["الجمل", "البحر", "الفيل", "الشاحنة"], "correct": 1 },
-  { "question": "ما هي عاصمة إندونيسيا؟", "options": ["جاكرتا", "بالي", "سورابايا", "باندونج"], "correct": 0 },
-  { "question": "من هو مخترع السيارة؟", "options": ["فورد", "كارل بنز", "تسلا", "دايملر"], "correct": 1 },
-  { "question": "ما هي لغة المكسيك الرسمية؟", "options": ["المكسيكية", "الإنجليزية", "الإسبانية", "الفرنسية"], "correct": 2 },
-  { "question": "ما هو الحيوان الذي لا ينام منذ ولادته حتى موته؟", "options": ["القرش", "الدلفين", "النملة", "الزرافة"], "correct": 0 },
-  { "question": "كم عدد أضلاع المثلث؟", "options": ["2", "3", "4", "5"], "correct": 1 },
-  { "question": "ما هو اللون الذي ينتج عن دمج الأزرق والأصفر؟", "options": ["الأرجواني", "الأخضر", "البرتقالي", "البني"], "correct": 1 },
-  { "question": "من هو صاحب لوحة 'الصرخة'؟", "options": ["فان جوخ", "إدوارد مونش", "بيكاسو", "دالي"], "correct": 1 },
-  { "question": "ما هي أكبر مدينة من حيث عدد السكان في أوروبا؟", "options": ["لندن", "باريس", "إسطنبول", "موسكو"], "correct": 2 },
-  { "question": "ما هو الغاز الذي يمتصه الإنسان ويخرجه في الشهيق؟", "options": ["نيتروجين", "أكسجين", "ثاني أكسيد الكربون", "أرجون"], "correct": 1 },
-  { "question": "ما هي عاصمة تايلاند؟", "options": ["بوكيت", "بانكوك", "شنغهاي", "سيول"], "correct": 1 },
-  { "question": "كم عدد أسنان اللبن عند الطفل؟", "options": ["10", "15", "20", "32"], "correct": 2 },
-  { "question": "ما هو أقرب كوكب إلى كوكب الأرض؟", "options": ["المريخ", "الزهرة", "عطارد", "المشتري"], "correct": 1 },
-  { "question": "من هي أول امرأة فازت بجائزة نوبل؟", "options": ["ماري كوري", "ملالا يوسفزي", "الأم تيريزا", "أوبرا وينفري"], "correct": 0 },
-  { "question": "ما هي عاصمة البرتغال؟", "options": ["مدريد", "لشبونة", "روما", "فارو"], "correct": 1 },
-  { "question": "ما هي الرياضة التي تستخدم فيها الكرات والمضارب على طاولة؟", "options": ["التنس", "الاسكواش", "تنس الطاولة", "الجولف"], "correct": 2 },
-  { "question": "ما هو الحيوان الذي يمتلك 4 معدات؟", "options": ["الجمل", "البقرة", "الحصان", "الخروف"], "correct": 1 },
-  { "question": "في أي مدينة يقع برج إيفل؟", "options": ["لندن", "برلين", "باريس", "روما"], "correct": 2 },
-  { "question": "ما هو الشيء الذي يقرأ ولا يكتب؟", "options": ["الكتاب", "العين", "الساعة", "القلم"], "correct": 2 },
-  { "question": "كم عدد لاعبي فريق الكرة الطائرة؟", "options": ["5", "6", "7", "11"], "correct": 1 },
-  { "question": "ما هي عاصمة بلجيكا؟", "options": ["أمستردام", "بروكسل", "لوتسنبرغ", "فيينا"], "correct": 1 },
-  { "question": "من هو مخترع الورق؟", "options": ["الفراعنة", "الصينيون", "الإغريق", "العرب"], "correct": 1 },
-  { "question": "ما هو العضو الذي يستخدمه السمك للتنفس؟", "options": ["الرئتين", "الخياشيم", "الجلد", "الزعانف"], "correct": 1 },
-  { "question": "ما هي أصغر قارة من حيث المساحة؟", "options": ["أوروبا", "أستراليا", "أمريكا الجنوبية", "أفريقيا"], "correct": 1 },
-  { "question": "ما هو الكوكب الذي يلقب بـ 'العملاق الغازي'؟", "options": ["المشتري", "زحل", "نبتون", "أورانوس"], "correct": 0 },
-  { "question": "من هو مؤلف سلسلة هاري بوتر؟", "options": ["ستيفن كينج", "جي كي رولينج", "شكسبير", "أجاثا كريستي"], "correct": 1 },
-  { "question": "ما هو الذهب الأسود؟", "options": ["الفحم", "البترول", "الحديد", "الماس الأسود"], "correct": 1 },
-  { "question": "ما هي عاصمة فيتنام؟", "options": ["هو تشي منه", "هانوي", "بانكوك", "مانيلا"], "correct": 1 },
-  { "question": "كم دقيقة في الساعة؟", "options": ["50", "60", "100", "120"], "correct": 1 },
-  { "question": "ما هي لغة بافاريا؟", "options": ["الألمانية", "الفرنسية", "الإيطالية", "الهولندية"], "correct": 0 },
-  { "question": "من هو مؤسس شركة فيسبوك؟", "options": ["بيل جيتس", "ستيف جوبز", "مارك زوكربيرج", "إيلون ماسك"], "correct": 2 },
-  { "question": "ما هو أسرع طائر في العالم؟", "options": ["النعامة", "الصقر الجوال (الشاهين)", "النسر", "الطنان"], "correct": 1 },
-  { "question": "ما هي عاصمة السويد؟", "options": ["أوسلو", "هلسنكي", "ستوكهولم", "كوبنهاجن"], "correct": 2 },
-  { "question": "كم عدد أضلاع المربع؟", "options": ["3", "4", "5", "6"], "correct": 1 },
-  { "question": "ما هو الحيوان الذي يغير لونه؟", "options": ["الحرباء", "الضفدع", "السحلية", "الأفعى"], "correct": 0 },
-  { "question": "من هو مخترع الميكروسكوب؟", "options": ["جاليلو", "ليفينهوك", "نيوتن", "باستور"], "correct": 1 },
-  { "question": "ما هي عاصمة النرويج؟", "options": ["ستوكهولم", "أوسلو", "هلسنكي", "برن"], "correct": 1 },
-  { "question": "ما هو الشيء الذي له أرجل ولكنه لا يمشي؟", "options": ["الكرسي", "النهر", "الساعة", "الطاولة"], "correct": 0 },
-  { "question": "كم عدد أصابع اليد الواحدة؟", "options": ["4", "5", "6", "10"], "correct": 1 },
-  { "question": "من هو أول إنسان صعد إلى القمر؟", "options": ["يوري غاغارين", "نيل أرمسترونج", "بينس ألدرين", "مايكل كولينز"], "correct": 1 },
-  { "question": "ما هي عاصمة النمسا؟", "options": ["فيينا", "برلين", "زيورخ", "لندن"], "correct": 0 },
-  { "question": "ما هو العضو المسؤول عن ضخ الدم؟", "options": ["المخ", "الرئة", "القلب", "الكبد"], "correct": 2 },
-  { "question": "ما هو الطائر الذي يرمز للسلام؟", "options": ["الغراب", "الحمامة", "الصقر", "العصفور"], "correct": 1 },
-  { "question": "كم عدد شهور السنة؟", "options": ["10", "11", "12", "13"], "correct": 2 },
-  { "question": "من هو مخترع التلغراف؟", "options": ["ماركوني", "صمويل مورس", "بيل", "أديسون"], "correct": 1 },
-  { "question": "ما هي عاصمة أوكرانيا؟", "options": ["موسكو", "كييف", "وارسو", "بودابست"], "correct": 1 },
-  { "question": "ما هو الغاز الذي يستخدم في تعبئة المناطيد؟", "options": ["الأكسجين", "الهيليوم", "النيتروجين", "ثاني أكسيد الكربون"], "correct": 1 },
-  { "question": "ما هي عاصمة فنلندا؟", "options": ["ستوكهولم", "هلسنكي", "أوسلو", "ريكيافيك"], "correct": 1 },
-  { "question": "من هو مخترع الإنترنت؟", "options": ["تيم بيرنرز لي", "بيل جيتس", "ستيف جوبز", "فنت سيرف"], "correct": 3 },
-  { "question": "كم عدد أرجل النملة؟", "options": ["4", "6", "8", "10"], "correct": 1 },
-  { "question": "ما هو الحيوان الذي يعيش في القطب الشمالي؟", "options": ["الفيل", "الأسد", "الدب القطبي", "الزرافة"], "correct": 2 },
-  { "question": "ما هي عاصمة أيسلندا؟", "options": ["ريكيافيك", "أوسلو", "لندن", "باريس"], "correct": 0 },
-  { "question": "من هو صاحب شركة تسلا؟", "options": ["مارك زوكربيرج", "إيلون ماسك", "جيف بيزوس", "بيل جيتس"], "correct": 1 },
-  { "question": "ما هو الشيء الذي يحميك من المطر؟", "options": ["المعطف", "المظلة", "القبعة", "كل ما سبق"], "correct": 3 },
-  { "question": "كم عدد فصول السنة؟", "options": ["2", "3", "4", "5"], "correct": 2 },
-  { "question": "ما هي عاصمة المجر (هنغاريا)؟", "options": ["بودابست", "براغ", "وارسو", "فيينا"], "correct": 0 },
-  { "question": "من هو مخترع الطباعة؟", "options": ["يوهان جوتنبرج", "ليوناردو دا فينشي", "جاليليو", "نيوتن"], "correct": 0 },
-  { "question": "ما هو الحيوان الذي يلقب بملك الغابة؟", "options": ["النمر", "الفهد", "الأسد", "الذئب"], "correct": 2 },
-  { "question": "ما هي عاصمة تشيكيا؟", "options": ["براتيسلافا", "براغ", "بودابست", "وارسو"], "correct": 1 },
-  { "question": "كم عدد أيام الأسبوع؟", "options": ["5", "6", "7", "8"], "correct": 2 },
-  { "question": "ما هو الشيء الذي يسير أمامك ولا تراه؟", "options": ["الظل", "الهواء", "المستقبل", "الريح"], "correct": 2 },
-  { "question": "من هو مكتشف الجاذبية؟", "options": ["أينشتاين", "نيوتن", "تسلا", "إديسون"], "correct": 1 },
-  { "question": "ما هي عاصمة رومانيا؟", "options": ["صوفيا", "بوخارست", "بلغراد", "تيرانا"], "correct": 1 },
-  { "question": "ما هو الغاز الذي نخرجه في الزفير؟", "options": ["الأكسجين", "النيتروجين", "ثاني أكسيد الكربون", "الهيليوم"], "correct": 2 },
-  { "question": "ما هي عاصمة بلغاريا؟", "options": ["صوفيا", "بوخارست", "تيرانا", "سكوبيه"], "correct": 0 },
-  { "question": "من هو مؤسس شركة أبل؟", "options": ["بيل جيتس", "ستيف جوبز", "مارك زوكربيرج", "إيلون ماسك"], "correct": 1 },
-  { "question": "كم عدد الكواكب في مجموعتنا الشمسية؟", "options": ["7", "8", "9", "10"], "correct": 1 },
-  { "question": "ما هو الحيوان الذي ينام واقفاً؟", "options": ["الكلب", "القط", "الحصان", "الأسد"], "correct": 2 },
-  { "question": "ما هي عاصمة صربيا؟", "options": ["بلغراد", "سراييفو", "زغرب", "ليوبليانا"], "correct": 0 },
-  { "question": "ما هو الشيء الذي له عين واحدة ولا يرى؟", "options": ["الإبرة", "الإنسان", "الكاميرا", "الباب"], "correct": 0 },
-  { "question": "كم عدد أحرف كلمة 'مصر'؟", "options": ["2", "3", "4", "5"], "correct": 1 },
-  { "question": "من هو مخترع الساعة؟", "options": ["بيتر هينلاين", "أديسون", "نيوتن", "جاليليو"], "correct": 0 },
-  { "question": "ما هي عاصمة كرواتيا؟", "options": ["زغرب", "بلغراد", "سراييفو", "تيرانا"], "correct": 0 },
-  { "question": "ما هو الغاز الذي يستخدم في تنفس الغواصين؟", "options": ["الأكسجين", "النيتروجين", "ثاني أكسيد الكربون", "الهيليوم"], "correct": 0 },
-  { "question": "ما هي عاصمة ألبانيا؟", "options": ["تيرانا", "صوفيا", "سكوبيه", "بودغوريتسا"], "correct": 0 },
-  { "question": "من هو صاحب شركة أمازون؟", "options": ["جيف بيزوس", "إيلون ماسك", "بيل جيتس", "مارك زوكربيرج"], "correct": 0 },
-  { "question": "كم عدد أصابع القدمين؟", "options": ["5", "10", "15", "20"], "correct": 1 },
-  { "question": "ما هو الحيوان الذي يعيش في الصحراء ويتحمل العطش؟", "options": ["الحصان", "الفيل", "الجمل", "الزرافة"], "correct": 2 },
-  { "question": "ما هي عاصمة سلوفاكيا؟", "options": ["براغ", "براتيسلافا", "ليوبليانا", "بودابست"], "correct": 1 },
-  { "question": "ما هو الشيء الذي ينبض بلا قلب؟", "options": ["الساعة", "الإنسان", "الباب", "المروحة"], "correct": 0 },
-  { "question": "كم عدد ألوان علم السعودية؟", "options": ["1", "2", "3", "4"], "correct": 1 },
-  { "question": "من هو مخترع الرادار؟", "options": ["واتسون وات", "أديسون", "موريس", "بيل"], "correct": 0 },
-  { "question": "ما هي عاصمة سلوفينيا؟", "options": ["ليوبليانا", "زغرب", "فيينا", "براتيسلافا"], "correct": 0 },
-  { "question": "ما هو الغاز الذي يوجد بكثرة في الهواء؟", "options": ["الأكسجين", "النيتروجين", "الهيدروجين", "ثاني أكسيد الكربون"], "correct": 1 },
-  { "question": "ما هي عاصمة إستونيا؟", "options": ["تالين", "ريغا", "فيلنيوس", "هلسنكي"], "correct": 0 },
-  { "question": "من هو أغنى رجل في العالم (حالياً)؟", "options": ["بيل جيتس", "إيلون ماسك", "جيف بيزوس", "برنارد أرنو"], "correct": 1 },
-  { "question": "كم عدد أرجل الدجاجة؟", "options": ["1", "2", "3", "4"], "correct": 1 },
-  { "question": "ما هو الحيوان الذي يلد ولا يبيض؟", "options": ["الحوت", "الدجاجة", "النعامة", "التمساح"], "correct": 0 },
-  { "question": "ما هي عاصمة لاتفيا؟", "options": ["تالين", "ريغا", "فيلنيوس", "مينسك"], "correct": 1 },
-  { "question": "ما هو الشيء الذي له رأس وليس له عين؟", "options": ["الدبوس", "المسمار", "الإنسان", "الباب"], "correct": 0 },
-  { "question": "كم عدد ألوان علم الكويت؟", "options": ["2", "3", "4", "5"], "correct": 2 },
-  { "question": "من هو مخترع البوصلة؟", "options": ["الصينيون", "العرب", "اليونانيون", "الأوروبيون"], "correct": 0 },
-  { "question": "ما هي عاصمة ليتوانيا؟", "options": ["فيلنيوس", "ريغا", "تالين", "وارسو"], "correct": 0 },
-  { "question": "ما هو الغاز الذي يستخدم في المصابيح؟", "options": ["الأرجون", "الأكسجين", "النيتروجين", "الهيليوم"], "correct": 0 },
-  { "question": "ما هي عاصمة بيلاروسيا؟", "options": ["موسكو", "كييف", "مينسك", "وارسو"], "correct": 2 },
-  { "question": "من هو مخترع قلم الرصاص؟", "options": ["كونتي", "أديسون", "فورد", "بيل"], "correct": 0 },
-  { "question": "كم عدد أرجل البقرة؟", "options": ["2", "3", "4", "5"], "correct": 2 },
-  { "question": "ما هو الحيوان الذي يأكل الخيزران (البامبو)؟", "options": ["الأسد", "الفيل", "الباندا", "القرد"], "correct": 2 },
-  { "question": "ما هي عاصمة مولدوفا؟", "options": ["كيشيناو", "بخارست", "كييف", "أوديسا"], "correct": 0 },
-  { "question": "ما هو الشيء الذي له أسنان ولا يأكل؟", "options": ["المشط", "الإنسان", "المنشار", "المقص"], "correct": 0 },
-  { "question": "كم عدد نجوم علم أمريكا؟", "options": ["40", "50", "60", "70"], "correct": 1 },
-  { "question": "من هو مخترع المحرك الكهربائي؟", "options": ["تسلا", "فاراداي", "أديسون", "نيوتن"], "correct": 1 },
-  { "question": "ما هي عاصمة جورجيا؟", "options": ["تبيليسي", "باكو", "يريفان", "أنقرة"], "correct": 0 },
-  { "question": "ما هو الغاز الذي يساعد في نضج الفاكهة؟", "options": ["الإيثيلين", "الأكسجين", "ثاني أكسيد الكربون", "النيتروجين"], "correct": 0 },
-  { "question": "ما هي عاصمة أرمينيا؟", "options": ["يريفان", "باكو", "تبيليسي", "أنقرة"], "correct": 0 },
-  { "question": "من هو مخترع الكاميرا؟", "options": ["لويس داجير", "أديسون", "بيل", "نيوتن"], "correct": 0 },
-  { "question": "كم عدد عيون الإنسان؟", "options": ["1", "2", "3", "4"], "correct": 1 },
-  { "question": "ما هو الحيوان الذي يسمى 'بهيمة الأنعام'؟", "options": ["الأسد", "الإبل والبقر والغنم", "الكلب", "القط"], "correct": 1 },
-  { "question": "ما هي عاصمة أذربيجان؟", "options": ["باكو", "تبيليسي", "يريفان", "أنقرة"], "correct": 0 },
-  { "question": "ما هو الشيء الذي يطير بلا أجنحة ويبكي بلا عيون؟", "options": ["السحاب", "العصفور", "الطائرة", "الورقة"], "correct": 0 },
-  { "question": "كم عدد ألوان علم فرنسا؟", "options": ["2", "3", "4", "5"], "correct": 1 },
-  { "question": "من هو مخترع البارود؟", "options": ["الصينيون", "العرب", "اليونانيون", "الأوروبيون"], "correct": 0 },
-  { "question": "ما هي عاصمة قبرص؟", "options": ["نيقوسيا", "أثينا", "أنقرة", "بيروت"], "correct": 0 },
-  { "question": "ما هو الغاز الذي تخرجه السيارات؟", "options": ["أول أكسيد الكربون", "الأكسجين", "النيتروجين", "الهيليوم"], "correct": 0 },
-  { "question": "ما هي عاصمة مالطا؟", "options": ["فاليتا", "روما", "مدريد", "تونس"], "correct": 0 },
-  { "question": "من هو مخترع المكنسة الكهربائية؟", "options": ["سيسيل بوث", "أديسون", "بيل", "فورد"], "correct": 0 },
-  { "question": "كم عدد أرجل العنكبوت؟", "options": ["6", "8", "10", "12"], "correct": 1 },
-  { "question": "ما هو الحيوان الذي ينام وعينه مفتوحة؟", "options": ["السمك", "الأسد", "القط", "الكلب"], "correct": 0 },
-  { "question": "ما هي عاصمة موناكو؟", "options": ["موناكو", "باريس", "نيس", "كان"], "correct": 0 },
-  { "question": "ما هو الشيء الذي ينمو ولا يتحرك؟", "options": ["الشجر", "الإنسان", "الحيوان", "الباب"], "correct": 0 },
-  { "question": "كم عدد ألوان علم الإمارات؟", "options": ["2", "3", "4", "5"], "correct": 2 },
-  { "question": "من هو مخترع البطارية؟", "options": ["أليساندرو فولتا", "أديسون", "بيل", "تسلا"], "correct": 0 },
-  { "question": "ما هي عاصمة لوكسمبورغ؟", "options": ["لوكسمبورغ", "بروكسل", "باريس", "برلين"], "correct": 0 },
-  { "question": "ما هو الغاز الذي يستخدم في اللحام؟", "options": ["الأسيتيلين", "الأكسجين", "النيتروجين", "الهيليوم"], "correct": 0 },
-  { "question": "ما هي عاصمة ليختنشتاين؟", "options": ["فادوز", "فيينا", "برن", "زيورخ"], "correct": 0 },
-  { "question": "من هو مخترع المروحة؟", "options": ["شويلر ويلر", "أديسون", "بيل", "فورد"], "correct": 0 },
-  { "question": "كم عدد أيدي الإنسان؟", "options": ["1", "2", "3", "4"], "correct": 1 },
-  { "question": "ما هو الحيوان الذي يصطاد بالليل؟", "options": ["البومة", "العصفور", "الحمامة", "الدجاجة"], "correct": 0 },
-  { "question": "ما هي عاصمة أندورا؟", "options": ["أندورا لا فيلا", "مدريد", "باريس", "برشلونة"], "correct": 0 },
-  { "question": "ما هو الشيء الذي له قفل وليس له باب؟", "options": ["الحقيبة", "الإنسان", "الساعة", "القفل"], "correct": 0 },
-  { "question": "كم عدد ألوان علم قطر؟", "options": ["1", "2", "3", "4"], "correct": 1 },
-  { "question": "من هو مخترع الغسالة؟", "options": ["ألفا فيشر", "أديسون", "بيل", "فورد"], "correct": 0 },
-  { "question": "ما هي عاصمة سان مارينو؟", "options": ["سان مارينو", "روما", "ميلانو", "فلورنسا"], "correct": 0 },
-  { "question": "ما هو الغاز الذي يستخدم في التبريد؟", "options": ["الفريون", "الأكسجين", "النيتروجين", "الهيليوم"], "correct": 0 },
-  { "question": "ما هي عاصمة الفاتيكان؟", "options": ["مدينة الفاتيكان", "روما", "ميلانو", "فلورنسا"], "correct": 0 },
-  { "question": "من هو مخترع المكواة؟", "options": ["هنري سيلي", "أديسون", "بيل", "فورد"], "correct": 0 },
-  { "question": "كم عدد كواكب المجموعة الشمسية؟", "options": ["7", "8", "9", "10"], "correct": 1 },
-  { "question": "ما هو الحيوان الذي له خرطوم؟", "options": ["الفيل", "الأسد", "القط", "الكلب"], "correct": 0 },
-  { "question": "ما هي عاصمة كازاخستان؟", "options": ["أستانا", "ألماتي", "طشقند", "باكو"], "correct": 0 },
-  { "question": "ما هو الشيء الذي يلسع ولا تراه؟", "options": ["البرد", "النحلة", "العقرب", "الأفعى"], "correct": 0 },
-  { "question": "كم عدد ألوان علم البحرين؟", "options": ["1", "2", "3", "4"], "correct": 1 },
-  { "question": "من هو مخترع الثلاجة؟", "options": ["ويليام كولين", "أديسون", "بيل", "فورد"], "correct": 0 },
-  { "question": "ما هي عاصمة أوزبكستان؟", "options": ["طشقند", "أستانا", "عشق آباد", "دوشانبي"], "correct": 0 },
-  { "question": "ما هو الغاز الذي يستخدم في ملء الإطارات؟", "options": ["الهواء", "الأكسجين", "النيتروجين", "الهيليوم"], "correct": 2 },
-  { "question": "ما هي عاصمة تركمانستان؟", "options": ["عشق آباد", "طشقند", "أستانا", "باكو"], "correct": 0 },
-  { "question": "من هو مخترع الدراجة؟", "options": ["بارون كارل فون درايس", "أديسون", "بيل", "فورد"], "correct": 0 },
-  { "question": "كم عدد آذان الإنسان؟", "options": ["1", "2", "3", "4"], "correct": 1 },
-  { "question": "ما هو الحيوان الذي له صدفة؟", "options": ["السلحفاة", "الأسد", "القط", "الكلب"], "correct": 0 },
-  { "question": "ما هي عاصمة طاجيكستان؟", "options": ["دوشانبي", "طشقند", "عشق آباد", "بيشكيك"], "correct": 0 },
-  { "question": "ما هو الشيء الذي له مفاتيح ولا يفتح باباً؟", "options": ["البيانو", "الإنسان", "الساعة", "الباب"], "correct": 0 },
-  { "question": "كم عدد ألوان علم عمان؟", "options": ["2", "3", "4", "5"], "correct": 1 },
-  { "question": "من هو مخترع التلفاز؟", "options": ["جون بيرد", "أديسون", "بيل", "ماركوني"], "correct": 0 },
-  { "question": "ما هي عاصمة قيرغيزستان؟", "options": ["بيشكيك", "دوشانبي", "طشقند", "أستانا"], "correct": 0 },
-  { "question": "ما هو الغاز الذي يساعد في عملية الاحتراق؟", "options": ["الأكسجين", "النيتروجين", "الهيدروجين", "ثاني أكسيد الكربون"], "correct": 0 },
-  { "question": "ما هي عاصمة منغوليا؟", "options": ["أولان باتور", "بكين", "سيول", "طوكيو"], "correct": 0 },
-  { "question": "من هو مخترع المظلة؟", "options": ["الصينيون", "العرب", "اليونانيون", "الأوروبيون"], "correct": 0 },
-  { "question": "كم عدد أرجل القطة؟", "options": ["2", "3", "4", "5"], "correct": 2 },
-  { "question": "ما هو الحيوان الذي يموء؟", "options": ["القط", "الكلب", "الأسد", "النمر"], "correct": 0 },
-  { "question": "ما هي عاصمة نيبال؟", "options": ["كاتماندو", "نيودلهي", "بكين", "بانكوك"], "correct": 0 },
-  { "question": "ما هو الشيء الذي له أرجل ولا يمشي؟", "options": ["الطاولة", "الإنسان", "الساعة", "النهر"], "correct": 0 },
-  { "question": "كم عدد ألوان علم اليمن؟", "options": ["2", "3", "4", "5"], "correct": 1 },
-  { "question": "من هو مخترع القفل؟", "options": ["المصريون القدماء", "العرب", "اليونانيون", "الأوروبيون"], "correct": 0 },
-  { "question": "ما هي عاصمة بوتان؟", "options": ["تيمفو", "كاتماندو", "نيودلهي", "بكين"], "correct": 0 },
-  { "question": "ما هو الغاز الذي يستخدم في النفخ؟", "options": ["الهواء", "الأكسجين", "النيتروجين", "الهيليوم"], "correct": 3 },
-  { "question": "ما هي عاصمة بنغلاديش؟", "options": ["دكا", "نيودلهي", "كاتماندو", "كولومبو"], "correct": 0 },
-  { "question": "من هو مخترع الصابون؟", "options": ["العرب", "الصينيون", "اليونانيون", "الأوروبيون"], "correct": 0 },
-  { "question": "كم عدد أرجل الأسد؟", "options": ["2", "3", "4", "5"], "correct": 2 },
-  { "question": "ما هو الحيوان الذي يزأر؟", "options": ["الأسد", "الكلب", "القط", "النمر"], "correct": 0 },
-  { "question": "ما هي عاصمة سريلانكا؟", "options": ["كولومبو", "نيودلهي", "دكا", "كاتماندو"], "correct": 0 },
-  { "question": "ما هو الشيء الذي له أوراق وليس شجراً؟", "options": ["الكتاب", "الإنسان", "الساعة", "الباب"], "correct": 0 },
-  { "question": "كم عدد ألوان علم العراق؟", "options": ["2", "3", "4", "5"], "correct": 2 },
-  { "question": "من هو مخترع العجلة؟", "options": ["السومريون", "العرب", "اليونانيون", "الأوروبيون"], "correct": 0 },
-  { "question": "ما هي عاصمة جزر المالديف؟", "options": ["ماليه", "كولومبو", "نيودلهي", "دكا"], "correct": 0 },
-  { "question": "ما هو الغاز الذي يوجد في الشمس؟", "options": ["الهيدروجين", "الأكسجين", "النيتروجين", "ثاني أكسيد الكربون"], "correct": 0 },
-  { "question": "ما هي عاصمة كوريا الشمالية؟", "options": ["بيونغ يانغ", "سيول", "بكين", "طوكيو"], "correct": 0 },
-  { "question": "من هو مخترع السيف؟", "options": ["الإنسان القديم", "العرب", "اليونانيون", "الأوروبيون"], "correct": 0 },
-  { "question": "كم عدد أرجل النمر؟", "options": ["2", "3", "4", "5"], "correct": 2 },
-  { "question": "ما هو الحيوان الذي ينبح؟", "options": ["الكلب", "القط", "الأسد", "النمر"], "correct": 0 },
-  { "question": "ما هي عاصمة باكستان؟", "options": ["إسلام آباد", "نيودلهي", "كابل", "طهران"], "correct": 0 },
-  { "question": "ما هو الشيء الذي له وجه وليس له رأس؟", "options": ["الساعة", "الإنسان", "الكتاب", "الباب"], "correct": 0 },
-  { "question": "كم عدد ألوان علم الأردن؟", "options": ["2", "3", "4", "5"], "correct": 2 },
-  { "question": "من هو مخترع القوس؟", "options": ["الإنسان القديم", "العرب", "اليونانيون", "الأوروبيون"], "correct": 0 },
-  { "question": "ما هي عاصمة تايلاند؟", "options": ["بانكوك", "سيول", "بكين", "طوكيو"], "correct": 0 },
-  { "question": "ما هو الغاز الذي يوجد في المشروبات الغازية؟", "options": ["ثاني أكسيد الكربون", "الأكسجين", "النيتروجين", "الهيدروجين"], "correct": 0 },
-  { "question": "ما هي عاصمة كمبوديا؟", "options": ["بنوم بنه", "بانكوك", "هانوي", "فيينتيان"], "correct": 0 },
-  { "question": "من هو مخترع الشراع؟", "options": ["الفينيقيون", "العرب", "اليونانيون", "الأوروبيون"], "correct": 0 },
-  { "question": "كم عدد أرجل الفهد؟", "options": ["2", "3", "4", "5"], "correct": 2 },
-  { "question": "ما هو الحيوان الذي ينهق؟", "options": ["الحمار", "الكلب", "القط", "الأسد"], "correct": 0 },
-  { "question": "ما هي عاصمة لاوس؟", "options": ["فيينتيان", "بنوم بنه", "بانكوك", "هانوي"], "correct": 0 },
-  { "question": "ما هو الشيء الذي له رقبة وليس له رأس؟", "options": ["الزجاجة", "الإنسان", "الساعة", "الباب"], "correct": 0 },
-  { "question": "كم عدد ألوان علم فلسطين؟", "options": ["2", "3", "4", "5"], "correct": 2 },
-  { "question": "من هو مخترع المحراث؟", "options": ["الإنسان القديم", "العرب", "اليونانيون", "الأوروبيون"], "correct": 0 },
-  { "question": "ما هي عاصمة ميانمار؟", "options": ["نايبيداو", "بانكوك", "دكا", "هانوي"], "correct": 0 },
-  { "question": "ما هو الغاز الذي يستخدم في الطبخ؟", "options": ["الغاز الطبيعي", "الأكسجين", "النيتروجين", "الهيليوم"], "correct": 0 },
-  { "question": "ما هي عاصمة بروناي؟", "options": ["بندر سري بكاوان", "جاكرتا", "مانيلا", "بانكوك"], "correct": 0 }
-  { "question": "ما هو العلم الذي يدرس الزلازل؟", "options": ["السيزمولوجيا", "الجيولوجيا", "الأرصاد", "المناخ"], "correct": 0 },
-  { "question": "ما هي أصغر عظمة في جسم الإنسان؟", "options": ["الفخذ", "الركاب", "الترقوة", "الرسغ"], "correct": 1 },
-  { "question": "من هو مؤلف كتاب 'مقدمة ابن خلدون'؟", "options": ["ابن بطوطة", "ابن خلدون", "ابن رشد", "الفارابي"], "correct": 1 },
-  { "question": "ما هو الحيوان الذي لا يمتلك هيكلاً عظمياً؟", "options": ["القرش", "الأخطبوط", "الدلفين", "السلحفاة"], "correct": 1 },
-  { "question": "في أي مدينة يقع مقر الأمم المتحدة؟", "options": ["واشنطن", "جنيف", "نيويورك", "باريس"], "correct": 2 },
-  { "question": "ما هو الغاز الذي يسمى 'غاز الضحك'؟", "options": ["أكسيد النيتروز", "الأرجون", "الهيليوم", "الميثان"], "correct": 0 },
-  { "question": "ما هي أكبر جزيرة في البحر المتوسط؟", "options": ["قبرص", "صقلية", "كريت", "مالطا"], "correct": 1 },
-  { "question": "من هو مكتشف جرثومة السل؟", "options": ["لويس باستور", "روبرت كوخ", "فليمنج", "مندل"], "correct": 1 },
-  { "question": "ما هي الدولة التي تملك أكبر عدد من الجزر؟", "options": ["إندونيسيا", "الفلبين", "السويد", "كندا"], "correct": 2 },
-  { "question": "كم عدد أحرف اللغة الإنجليزية؟", "options": ["24", "26", "28", "30"], "correct": 1 },
-  { "question": "ما هو العضو الذي يخزن السكر الزائد في الجسم؟", "options": ["البنكرياس", "الكبد", "المعدة", "الكلية"], "correct": 1 },
-  { "question": "من هو أول من صبغ بالسواد؟", "options": ["فرعون", "النمرود", "قارون", "أبو لهب"], "correct": 0 },
-  { "question": "ما هو الحيوان الذي قلبه في رأسه؟", "options": ["الجمبري", "الأخطبوط", "الحوت", "السرطان"], "correct": 0 },
-  { "question": "ما هي العملة الرسمية في سويسرا؟", "options": ["اليورو", "الفرنك", "الدولار", "الجنيه"], "correct": 1 },
-  { "question": "من هو الشاعر الذي قتله شعره؟", "options": ["أحمد شوقي", "المتنبي", "الفرزدق", "جرير"], "correct": 1 },
-  { "question": "ما هي القارة التي لا يوجد فيها صحراء؟", "options": ["أستراليا", "أوروبا", "أمريكا الشمالية", "آسيا"], "correct": 1 },
-  { "question": "ما هو الشيء الذي تذبحه وتبكي عليه؟", "options": ["البطيخ", "البصل", "الخروف", "الدجاج"], "correct": 1 },
-  { "question": "ما هو الكوكب الملقب بـ 'نجمة الصباح'؟", "options": ["المريخ", "الزهرة", "عطارد", "المشتري"], "correct": 1 },
-  { "question": "كم عدد أوتار العود؟", "options": ["4", "5", "6", "7"], "correct": 2 },
-  { "question": "ما هي أقوى مادة في جسم الإنسان؟", "options": ["العظم", "مينا الأسنان", "الغضروف", "الجمجمة"], "correct": 1 },
-  { "question": "ما هو الحيوان الذي لا ينام؟", "options": ["النملة", "القرش", "الزرافة", "الفيل"], "correct": 1 },
-  { "question": "من هو مؤسس علم الاجتماع؟", "options": ["ابن خلدون", "أرسطو", "أفلاطون", "سقراط"], "correct": 0 },
-  { "question": "ما هي الدولة الأفريقية التي لم تستعمر أبداً؟", "options": ["مصر", "إثيوبيا", "السودان", "نيجيريا"], "correct": 1 },
-  { "question": "كم عدد أرجل البرغوث؟", "options": ["4", "6", "8", "10"], "correct": 1 },
-  { "question": "ما هي عاصمة فيتنام؟", "options": ["هانوي", "هو تشي منه", "بانكوك", "مانيلا"], "correct": 0 },
-  { "question": "ما هو المرض الملقب بـ 'الموت الأسود'؟", "options": ["الكوليرا", "الطاعون", "الجدري", "السل"], "correct": 1 },
-  { "question": "من هي أول امرأة فازت بنوبل؟", "options": ["ماري كوري", "ملالا", "تيريزا", "نادين"], "correct": 0 },
-  { "question": "ما هي لغة النمسا الرسمية؟", "options": ["الألمانية", "النمساوية", "الفرنسية", "الإيطالية"], "correct": 0 },
-  { "question": "ما هو العنصر الكيميائي الموجود في ملح الطعام؟", "options": ["البوتاسيوم", "الصوديوم", "المغنيسيوم", "الكالسيوم"], "correct": 1 },
-  { "question": "كم قلب للأخطبوط؟", "options": ["1", "2", "3", "4"], "correct": 2 },
-  { "question": "ما هي عاصمة المكسيك؟", "options": ["كانكون", "مكسيكو سيتي", "غوادالاخارا", "تيخوانا"], "correct": 1 },
-  { "question": "من هو مكتشف الدورة الدموية الصغرى؟", "options": ["ويليام هارفي", "ابن النفيس", "ابن سينا", "الرازي"], "correct": 1 },
-  { "question": "ما هو الطائر الذي يضع بيضه في عش غيره؟", "options": ["الغراب", "الوقواق", "الهدهد", "البومة"], "correct": 1 },
-  { "question": "كم عدد كرات البلياردو (بدون البيضاء)؟", "options": ["10", "15", "20", "21"], "correct": 1 },
-  { "question": "ما هي عاصمة فنلندا؟", "options": ["أوسلو", "هلسنكي", "ستوكهولم", "ريكيافيك"], "correct": 1 },
-  { "question": "ما هي المادة التي تُصنع منها شاشات الهواتف؟", "options": ["الحديد", "السليكا/الزجاج", "الألومنيوم", "النحاس"], "correct": 1 },
-  { "question": "ما هو الحيوان الملقب بـ 'أبو اليقظان'؟", "options": ["الديك", "الأسد", "الصقر", "الكلب"], "correct": 0 },
-  { "question": "في أي سنة تم اختراع الكاميرا الرقمية؟", "options": ["1975", "1985", "1995", "2000"], "correct": 0 },
-  { "question": "ما هي عاصمة نيجيريا؟", "options": ["لاغوس", "أبوجا", "كانو", "بورت هاركورت"], "correct": 1 },
-  { "question": "من هو مؤسس تطبيق واتساب؟", "options": ["مارك زوكربيرج", "جان كوم", "جاك دورسي", "إيفان شبيغل"], "correct": 1 },
-  { "question": "ما هو المعدن الذي يتميز بخاصية المغناطيسية؟", "options": ["الذهب", "الحديد", "النحاس", "الرصاص"], "correct": 1 },
-  { "question": "كم عدد الجيوب الأنفية في رأس الإنسان؟", "options": ["4", "6", "8", "10"], "correct": 2 },
-  { "question": "ما هي عاصمة أوزبكستان؟", "options": ["عشق آباد", "طشقند", "باكو", "أستانا"], "correct": 1 },
-  { "question": "ما هو الحيوان الذي لا يصدر صوتاً؟", "options": ["الزرافة", "الأرنب", "التمساح", "الحوت"], "correct": 0 },
-  { "question": "من هو أول شعب استخدم الساعة؟", "options": ["العرب", "الصينيون", "الفراعنة", "اليونانيون"], "correct": 2 },
-  { "question": "ما هي لغة البرازيل؟", "options": ["الإسبانية", "البرتغالية", "الإنجليزية", "الفرنسية"], "correct": 1 },
-  { "question": "كم عدد أضلاع الشكل الثماني؟", "options": ["6", "7", "8", "9"], "correct": 2 },
-  { "question": "ما هي عاصمة السنغال؟", "options": ["باماكو", "داكار", "كوناكري", "أبيدجان"], "correct": 1 },
-  { "question": "من هو مخترع المكنسة الكهربائية؟", "options": ["إديسون", "سيسيل بوث", "بيل", "تيسلا"], "correct": 1 },
-  { "question": "ما هو الشيء الذي يمشي ورأسك تحته؟", "options": ["الحذاء", "السقف", "القبعة", "المظلة"], "correct": 0 },
-  { "question": "كم عدد السعرات الحرارية في الماء؟", "options": ["0", "1", "10", "100"], "correct": 0 },
-  { "question": "ما هي عاصمة تايلاند؟", "options": ["بانكوك", "بوكيت", "بتايا", "سيول"], "correct": 0 },
-  { "question": "ما هو الجزء المسؤول عن التوازن في الأذن؟", "options": ["الطبلة", "القنوات الهلالية", "المطرقة", "السندان"], "correct": 1 },
-  { "question": "من هو مؤسس الدولة العباسية؟", "options": ["أبو العباس السفاح", "هارون الرشيد", "المأمون", "المنصور"], "correct": 0 },
-  { "question": "ما هي عاصمة كينيا؟", "options": ["نيروبي", "مومباسا", "أديس أبابا", "جوهانسبرج"], "correct": 0 },
-  { "question": "كم عدد ألوان قوس قزح؟", "options": ["5", "6", "7", "8"], "correct": 2 },
-  { "question": "ما هو الحيوان الذي يستطيع تدوير رأسه 270 درجة؟", "options": ["الصقر", "البومة", "الغراب", "النسر"], "correct": 1 },
-  { "question": "ما هي عاصمة النرويج؟", "options": ["ستوكهولم", "أوسلو", "هلسنكي", "برن"], "correct": 1 },
-  { "question": "من هو مخترع البطارية الكهربائية؟", "options": ["فاراداي", "فولتا", "أمبير", "أوم"], "correct": 1 },
-  { "question": "ما هو الشيء الذي يسكن الجبال ويرتدي العمائم؟", "options": ["السحاب", "البركان", "الثلج", "النخيل"], "correct": 3 },
-  { "question": "كم تبلغ درجة غليان الماء؟", "options": ["90", "100", "110", "120"], "correct": 1 },
-  { "question": "ما هي عاصمة الفلبين؟", "options": ["بانكوك", "مانيلا", "جاكرتا", "كولومبو"], "correct": 1 },
-  { "question": "ما هو الغاز الذي يستخدمه النبات في التمثيل الضوئي؟", "options": ["الأكسجين", "ثاني أكسيد الكربون", "النيتروجين", "الميثان"], "correct": 1 },
-  { "question": "من هو مؤسس مدينة القاهرة؟", "options": ["صلاح الدين", "جوهر الصقلي", "عمرو بن العاص", "الخديوي إسماعيل"], "correct": 1 },
-  { "question": "ما هي عاصمة بلجيكا؟", "options": ["بروكسل", "أمستردام", "باريس", "برلين"], "correct": 0 },
-  { "question": "كم عدد أسنان الإنسان البالغ؟", "options": ["28", "30", "32", "34"], "correct": 2 },
-  { "question": "ما هو المعدن السائل الوحيد؟", "options": ["الرصاص", "الزئبق", "القصدير", "النحاس"], "correct": 1 },
-  { "question": "ما هي عاصمة بولندا؟", "options": ["كراكوف", "وارسو", "بودابست", "براغ"], "correct": 1 },
-  { "question": "من هو مخترع المحرك البخاري؟", "options": ["جيمس واط", "ستيفنسون", "نيوتن", "فورد"], "correct": 0 },
-  { "question": "ما هو الشيء الذي يحيا في الصيف ويموت في الشتاء؟", "options": ["المروحة", "المظلة", "المكيف", "الثلج"], "correct": 3 },
-  { "question": "كم عدد أجنحة النحلة؟", "options": ["2", "4", "6", "8"], "correct": 1 },
-  { "question": "ما هي عاصمة المجر؟", "options": ["بودابست", "فيينا", "بوخارست", "بلغراد"], "correct": 0 },
-  { "question": "ما هو أقرب نجم إلى الأرض؟", "options": ["الشمس", "ألفا قنطورس", "سهيل", "الشعرى اليمانية"], "correct": 0 },
-  { "question": "من هو أول خليفة أموي؟", "options": ["معاوية بن أبي سفيان", "يزيد بن معاوية", "عمر بن عبدالعزيز", "مروان بن الحكم"], "correct": 0 },
-  { "question": "ما هي عاصمة أوكرانيا؟", "options": ["موسكو", "كييف", "وارسو", "مينسك"], "correct": 1 },
-  { "question": "كم عدد فقرات عنق الإنسان؟", "options": ["5", "6", "7", "8"], "correct": 2 },
-  { "question": "ما هو أقوى حيوان بري من حيث العضة؟", "options": ["الأسد", "النمر", "التمساح", "فرس النهر"], "correct": 2 },
-  { "question": "ما هي عاصمة رومانيا؟", "options": ["بوخارست", "صوفيا", "تيرانا", "بودابست"], "correct": 0 },
-  { "question": "من هو مخترع المصباح الكهربائي؟", "options": ["نيوتن", "أديسون", "بيل", "تيسلا"], "correct": 1 },
-  { "question": "ما هو الشيء الذي يكتب ولا يقرأ؟", "options": ["القلم", "الكتاب", "العين", "الورق"], "correct": 0 },
-  { "question": "كم عدد كواكب المجموعة الشمسية؟", "options": ["7", "8", "9", "10"], "correct": 1 },
-  { "question": "ما هي عاصمة اليونان؟", "options": ["روما", "أثينا", "قبرص", "مدريد"], "correct": 1 },
-  { "question": "ما هو الغاز الذي يحمينا من الأشعة فوق البنفسجية؟", "options": ["الأوزون", "الأكسجين", "النيتروجين", "الهيدروجين"], "correct": 0 },
-  { "question": "من هو فاتح الأندلس؟", "options": ["طارق بن زياد", "عقبة بن نافع", "موسى بن نصير", "كل ما سبق"], "correct": 3 },
-  { "question": "ما هي عاصمة تشيلي؟", "options": ["ليما", "سانتياغو", "بوينس آيرس", "برازيليا"], "correct": 1 },
-  { "question": "كم عدد القارات في العالم؟", "options": ["5", "6", "7", "8"], "correct": 2 },
-  { "question": "ما هو أطول جبل في أفريقيا؟", "options": ["إيفرست", "كيليمنجارو", "أطلس", "سانت كاترين"], "correct": 1 },
-  { "question": "ما هي عاصمة إثيوبيا؟", "options": ["نيروبي", "أديس أبابا", "الخرطوم", "جيبوتي"], "correct": 1 },
-  { "question": "من هو مخترع الهاتف؟", "options": ["أديسون", "جراهام بيل", "ماركوني", "تيسلا"], "correct": 1 },
-  { "question": "ما هو الشيء الذي له عين واحدة ولا يرى؟", "options": ["الإبرة", "الإنسان", "الباب", "القلم"], "correct": 0 },
-  { "question": "كم عدد أرجل العنكبوت؟", "options": ["6", "8", "10", "12"], "correct": 1 },
-  { "question": "ما هي عاصمة كوبا؟", "options": ["مكسيكو", "هافانا", "سان دييغو", "ليما"], "correct": 1 },
-  { "question": "ما هو الكوكب المسمى بالكوكب الأحمر؟", "options": ["المريخ", "زحل", "المشتري", "الزهرة"], "correct": 0 },
-  { "question": "من هو مؤسس الدولة الفاطمية؟", "options": ["المعز لدين الله", "عبيد الله المهدي", "الحاكم بأمر الله", "العزيز بالله"], "correct": 1 },
-  { "question": "ما هي عاصمة كرواتيا؟", "options": ["زغرب", "بلغراد", "تيرانا", "سراييفو"], "correct": 0 },
-  { "question": "كم عدد أوتار الجيتار العادي؟", "options": ["4", "5", "6", "7"], "correct": 2 },
-  { "question": "ما هو الحيوان الذي يبدل جلده؟", "options": ["التمساح", "الأفعى", "السحلية", "الضفدع"], "correct": 1 },
-  { "question": "ما هي عاصمة أيسلندا؟", "options": ["أوسلو", "ريكيافيك", "هلسنكي", "كوبنهاجن"], "correct": 1 },
-  { "question": "من هو مخترع الطائرة؟", "options": ["الأخوان رايت", "فورد", "بيل", "أديسون"], "correct": 0 },
-  { "question": "ما هو الشيء الذي يسير بلا قدمين ويدخل الأذنين؟", "options": ["الصوت", "الهواء", "النور", "الريح"], "correct": 0 },
-  { "question": "كم يبلغ عدد أسنان اللبن عند الطفل؟", "options": ["10", "20", "28", "32"], "correct": 1 },
-  { "question": "ما هي عاصمة نيوزيلندا؟", "options": ["سيدني", "ويلينغتون", "أوكلاند", "ملبورن"], "correct": 1 },
-  { "question": "ما هو أكبر حيوان لا فقاري؟", "options": ["الحوت الأزرق", "الحبار العملاق", "القرش", "الأخطبوط"], "correct": 1 },
-  { "question": "من هو صاحب لقب 'الفرار'؟", "options": ["المتنبي", "النابغة", "الأخطل", "لا أحد مما سبق"], "correct": 3 },
-  { "question": "ما هي عاصمة كازاخستان؟", "options": ["أستانا", "ألماتي", "طشقند", "باكو"], "correct": 0 },
-  { "question": "كم عدد حلقات العلم الأولمبي؟", "options": ["4", "5", "6", "7"], "correct": 1 },
-  { "question": "ما هو المعدن الأغلى في العالم؟", "options": ["الذهب", "البلاتين", "الروديوم", "الألماس"], "correct": 2 },
-  { "question": "ما هي عاصمة نيبال؟", "options": ["كاتماندو", "بوتان", "تبت", "سيول"], "correct": 0 },
-  { "question": "من هو مخترع الرادار؟", "options": ["واتسون وات", "ماركوني", "تيسلا", "أديسون"], "correct": 0 },
-  { "question": "ما هو الشيء الذي كلما زاد نقص؟", "options": ["العمر", "الحفرة", "المال", "العلم"], "correct": 0 },
-  { "question": "كم عدد أيام السنة الكبيسة؟", "options": ["364", "365", "366", "367"], "correct": 2 },
-  { "question": "ما هي عاصمة إستونيا؟", "options": ["تالين", "ريغا", "فيلنيوس", "هلسنكي"], "correct": 0 },
-  { "question": "ما هو أعمق خندق في المحيطات؟", "options": ["ماريانا", "جاوا", "تونجا", "بورتوريكو"], "correct": 0 },
-  { "question": "من هو مكتشف البنسلين؟", "options": ["باستور", "فليمنج", "نوبل", "كوخ"], "correct": 1 },
-  { "question": "ما هي عاصمة لاتفيا؟", "options": ["تالين", "ريغا", "فيلنيوس", "وارسو"], "correct": 1 },
-  { "question": "كم عدد أذرع نجم البحر العادي؟", "options": ["3", "4", "5", "6"], "correct": 2 },
-  { "question": "ما هو الحيوان الذي يتنفس من مؤخرته؟", "options": ["السلحفاة", "الضفدع", "التمساح", "الحوت"], "correct": 0 },
-  { "question": "ما هي عاصمة ليتوانيا؟", "options": ["فيلنيوس", "ريغا", "تالين", "مينسك"], "correct": 0 },
-  { "question": "من هو مخترع الديناميت؟", "options": ["ألفرد نوبل", "نيوتن", "أينشتاين", "أديسون"], "correct": 0 },
-  { "question": "ما هو الشيء الذي يحمل طعامه فوق رأسه؟", "options": ["النملة", "القلم", "الحمال", "الجمل"], "correct": 1 },
-  { "question": "كم عدد غرف قلب الإنسان؟", "options": ["2", "3", "4", "5"], "correct": 2 },
-  { "question": "ما هي عاصمة بلغاريا؟", "options": ["صوفيا", "بوخارست", "بلغراد", "تيرانا"], "correct": 0 },
-  { "question": "ما هو أقرب كوكب للشمس؟", "options": ["عطارد", "الزهرة", "الأرض", "المريخ"], "correct": 0 },
-  { "question": "من هو مؤلف رواية 'البؤساء'؟", "options": ["فيكتور هوجو", "شكسبير", "تولستوي", "ديكنز"], "correct": 0 },
-  { "question": "ما هي عاصمة سلوفاكيا؟", "options": ["براتيسلافا", "براغ", "وارسو", "بودابست"], "correct": 0 },
-  { "question": "كم عدد مفاتيح البيانو القياسي؟", "options": ["77", "88", "99", "100"], "correct": 1 },
-  { "question": "ما هو الحيوان الذي لا يشرب الماء؟", "options": ["الجمل", "اليربوع", "الأفعى", "الكنغر البري"], "correct": 3 },
-  { "question": "ما هي عاصمة سلوفينيا؟", "options": ["ليوبليانا", "زغرب", "سراييفو", "تيرانا"], "correct": 0 },
-  { "question": "من هو مخترع لغة البرمجة C؟", "options": ["دينيس ريتشي", "بيل جيتس", "مارك", "جوبز"], "correct": 0 },
-  { "question": "ما هو الشيء الذي له أرجل ولكنه لا يمشي؟", "options": ["الكرسي", "النهر", "الساعة", "القلم"], "correct": 0 },
-  { "question": "كم عدد لاعبين فريق كرة السلة؟", "options": ["5", "6", "7", "11"], "correct": 0 },
-  { "question": "ما هي عاصمة أذربيجان؟", "options": ["باكو", "يريفان", "تبيليسي", "أنقرة"], "correct": 0 },
-  { "question": "ما هو الغاز الذي تتنفسه النباتات؟", "options": ["الأكسجين", "ثاني أكسيد الكربون", "النيتروجين", "الهيليوم"], "correct": 1 },
-  { "question": "من هو مؤسس شركة مايكروسوفت؟", "options": ["بيل جيتس", "ستيف جوبز", "إيلون ماسك", "مارك"], "correct": 0 },
-  { "question": "ما هي عاصمة جورجيا؟", "options": ["تبيليسي", "باكو", "يريفان", "موسكو"], "correct": 0 },
-  { "question": "كم عدد المحيطات في العالم؟", "options": ["3", "4", "5", "6"], "correct": 2 },
-  { "question": "ما هو الحيوان الذي قلبه في جهة اليمين؟", "options": ["لا يوجد", "الفيل", "الزرافة", "الحوت"], "correct": 0 },
-  { "question": "ما هي عاصمة أرمينيا؟", "options": ["يريفان", "باكو", "تبيليسي", "طهران"], "correct": 0 },
-  { "question": "من هو مخترع المكواة؟", "options": ["هنري سيلي", "أديسون", "بيل", "فورد"], "correct": 0 },
-  { "question": "ما هو الشيء الذي ينمو ولا يتحرك؟", "options": ["الشعر", "الحجر", "الخشب", "الحديد"], "correct": 0 },
-  { "question": "كم عدد صمامات القلب؟", "options": ["2", "3", "4", "5"], "correct": 2 },
-  { "question": "ما هي عاصمة بيلاروسيا؟", "options": ["مينسك", "موسكو", "كييف", "وارسو"], "correct": 0 },
-  { "question": "ما هو العنصر الكيميائي Fe؟", "options": ["الذهب", "الفضة", "الحديد", "النحاس"], "correct": 2 },
-  { "question": "من هو صاحب لوحة 'العشاء الأخير'؟", "options": ["دا فينشي", "بيكاسو", "رافاييل", "مايكل أنجلو"], "correct": 0 },
-  { "question": "ما هي عاصمة مولدوفا؟", "options": ["كيشيناو", "بخارست", "كييف", "أوديسا"], "correct": 0 },
-  { "question": "كم عدد خطوط الطول؟", "options": ["180", "360", "90", "120"], "correct": 1 },
-  { "question": "ما هو الحيوان الذي لا يمتلك معدة؟", "options": ["فرس النبي", "البلاتيبوس", "الحلزون", "الصرصور"], "correct": 1 },
-  { "question": "ما هي عاصمة قبرص؟", "options": ["نيقوسيا", "أثينا", "أنقرة", "بيروت"], "correct": 0 },
-  { "question": "من هو مخترع الطباعة؟", "options": ["جوتنبرج", "دا فينشي", "نيوتن", "جاليليو"], "correct": 0 },
-  { "question": "ما هو الشيء الذي يقرأ ولا يكتب؟", "options": ["الساعة", "العين", "القلم", "الكتاب"], "correct": 0 },
-  { "question": "كم عدد أرجل النملة؟", "options": ["4", "6", "8", "10"], "correct": 1 },
-  { "question": "ما هي عاصمة ألبانيا؟", "options": ["تيرانا", "صوفيا", "سكوبيه", "بودغوريتسا"], "correct": 0 },
-  { "question": "ما هو الغاز الذي يستخدم في إطفاء الحرائق؟", "options": ["الأكسجين", "ثاني أكسيد الكربون", "الهيدروجين", "النيتروجين"], "correct": 1 },
-  { "question": "من هو مؤسس شركة أمازون؟", "options": ["جيف بيزوس", "بيل جيتس", "إيلون ماسك", "مارك"], "correct": 0 },
-  { "question": "ما هي عاصمة الجبل الأسود؟", "options": ["بودغوريتسا", "تيرانا", "بلغراد", "سراييفو"], "correct": 0 },
-  { "question": "كم عدد ألوان علم إيطاليا؟", "options": ["2", "3", "4", "5"], "correct": 1 },
-  { "question": "ما هو الكائن الذي يرى بأذنيه؟", "options": ["الخفاش", "البومة", "القط", "الكلب"], "correct": 0 },
-  { "question": "ما هي عاصمة مقدونيا الشمالية؟", "options": ["سكوبيه", "تيرانا", "صوفيا", "بلغراد"], "correct": 0 },
-  { "question": "من هو مخترع الرسوم المتحركة؟", "options": ["إميل رينو", "والت ديزني", "أديسون", "بيل"], "correct": 0 },
-  { "question": "ما هو الشيء الذي له أسنان ولا يعض؟", "options": ["المشط", "المنشار", "السكين", "المقص"], "correct": 0 },
-  { "question": "كم عدد الفقرات في عمود الإنسان الفقري؟", "options": ["30", "33", "35", "40"], "correct": 1 },
-  { "question": "ما هي عاصمة البوسنة والهرسك؟", "options": ["سراييفو", "بلغراد", "زغرب", "تيرانا"], "correct": 0 },
-  { "question": "ما هو العلم الذي يدرس طبقات الأرض؟", "options": ["الجيولوجيا", "البيولوجيا", "الفلك", "الكيمياء"], "correct": 0 },
-  { "question": "من هو صاحب شركة تسلا؟", "options": ["إيلون ماسك", "بيل جيتس", "مارك", "جوبز"], "correct": 0 },
-  { "question": "ما هي عاصمة لوكسمبورغ؟", "options": ["لوكسمبورغ", "بروكسل", "باريس", "برلين"], "correct": 0 },
-  { "question": "كم عدد أيام شهر فبراير في السنة الكبيسة؟", "options": ["27", "28", "29", "30"], "correct": 2 },
-  { "question": "ما هو الحيوان الذي ينام واقفاً؟", "options": ["الحصان", "الكلب", "القط", "الأسد"], "correct": 0 },
-  { "question": "ما هي عاصمة موناكو؟", "options": ["موناكو", "باريس", "نيس", "كان"], "correct": 0 },
-  { "question": "من هو مخترع السينما؟", "options": ["الأخوة لوميير", "أديسون", "بيل", "ديزني"], "correct": 0 },
-  { "question": "ما هو الشيء الذي يحميك من المطر؟", "options": ["المظلة", "القبعة", "المعطف", "كل ما سبق"], "correct": 3 },
-  { "question": "كم عدد القارات المأهولة بالسكان؟", "options": ["4", "5", "6", "7"], "correct": 2 },
-  { "question": "ما هي عاصمة ليختنشتاين؟", "options": ["فادوز", "فيينا", "برن", "زيورخ"], "correct": 0 },
-  { "question": "ما هو الغاز الذي يستخدم في اللحام؟", "options": ["الأسيتيلين", "الأكسجين", "النيتروجين", "الهيدروجين"], "correct": 0 },
-  { "question": "من هو مؤسس شركة أبل؟", "options": ["ستيف جوبز", "بيل جيتس", "إيلون ماسك", "مارك"], "correct": 0 },
-  { "question": "ما هي عاصمة أندورا؟", "options": ["أندورا لا فيلا", "مدريد", "باريس", "برشلونة"], "correct": 0 },
-  { "question": "كم عدد لاعبين فريق كرة اليد؟", "options": ["5", "6", "7", "11"], "correct": 2 },
-  { "question": "ما هو الكائن الذي ينام 3 سنوات؟", "options": ["الحلزون", "السلحفاة", "الأسد", "النملة"], "correct": 0 },
-  { "question": "ما هي عاصمة سان مارينو؟", "options": ["سان مارينو", "روما", "ميلانو", "فلورنسا"], "correct": 0 },
-  { "question": "من هو مخترع المحرك الكهربائي؟", "options": ["فاراداي", "أديسون", "بيل", "تيسلا"], "correct": 0 },
-  { "question": "ما هو الشيء الذي له وجه وليس له رأس؟", "options": ["الساعة", "الإنسان", "الكتاب", "الباب"], "correct": 0 },
-  { "question": "كم عدد ألوان علم ألمانيا؟", "options": ["2", "3", "4", "5"], "correct": 1 },
-  { "question": "ما هي عاصمة الفاتيكان؟", "options": ["الفاتيكان", "روما", "ميلانو", "فلورنسا"], "correct": 0 },
-  { "question": "ما هو الغاز الأخف وزناً؟", "options": ["الهيدروجين", "الأكسجين", "النيتروجين", "الهيليوم"], "correct": 0 },
-  { "question": "من هو مخترع المكنسة الكهربائية؟", "options": ["سيسيل بوث", "أديسون", "بيل", "فورد"], "correct": 0 },
-  { "question": "ما هي عاصمة مالطا؟", "options": ["فاليتا", "روما", "تونس", "لندن"], "correct": 0 },
-  { "question": "كم عدد قلوب دودة الأرض؟", "options": ["1", "3", "5", "10"], "correct": 2 },
-  { "question": "ما هو الحيوان الذي يموت إذا شرب الماء؟", "options": ["الكنغر البري", "الجمل", "الأفعى", "الأسد"], "correct": 0 },
-  { "question": "ما هي عاصمة جبل طارق؟", "options": ["جبل طارق", "مدريد", "لندن", "طنجة"], "correct": 0 },
-  { "question": "من هو مخترع الغسالة؟", "options": ["ألفا فيشر", "أديسون", "بيل", "فورد"], "correct": 0 },
-  { "question": "ما هو الشيء الذي ينبض بلا قلب؟", "options": ["الساعة", "الإنسان", "الباب", "المروحة"], "correct": 0 },
-  { "question": "كم عدد ألوان علم اليابان؟", "options": ["1", "2", "3", "4"], "correct": 1 },
-  { "question": "ما هي عاصمة تايوان؟", "options": ["تايبيه", "بكين", "سيول", "طوكيو"], "correct": 0 },
-  { "question": "ما هو الغاز الذي يستخدم في بالونات الحفلات؟", "options": ["الهيليوم", "الأكسجين", "النيتروجين", "الهيدروجين"], "correct": 0 },
-  { "question": "من هو مخترع الثلاجة؟", "options": ["ويليام كولين", "أديسون", "بيل", "فورد"], "correct": 0 },
-  { "question": "ما هي عاصمة بروناي؟", "options": ["بندر سري بكاوان", "جاكرتا", "مانيلا", "بانكوك"], "correct": 0 },
-  { "question": "كم عدد أرجل الحصان؟", "options": ["2", "3", "4", "5"], "correct": 2 },
-  { "question": "ما هو الحيوان الذي يسمى 'سفينة الصحراء'؟", "options": ["الجمل", "الأسد", "القط", "الكلب"], "correct": 0 },
-  { "question": "ما هي عاصمة تيمور الشرقية؟", "options": ["ديلي", "جاكرتا", "مانيلا", "بانكوك"], "correct": 0 },
-  { "question": "ما هو الشيء الذي له رأس وليس له عين؟", "options": ["المسمار", "الإنسان", "الباب", "القلم"], "correct": 0 },
-  { "question": "كم عدد ألوان علم الصين؟", "options": ["1", "2", "3", "4"], "correct": 1 },
-  { "question": "من هو مخترع الورق؟", "options": ["تسوي لون", "الفراعنة", "العرب", "اليونانيون"], "correct": 0 }
-];
 
-let remainingQuestions = [];
-let currentQuestionIndex = 0;
-let score = 0;
+    const apiKey = ""; 
 
-// نظام إدارة الأسئلة لعدم التكرار نهائياً
-function initGame() {
-    // جلب الأسئلة المتبقية من الذاكرة المحلية أو البدء من جديد
-    let saved = localStorage.getItem('kramlat_questions');
-    if (saved && JSON.parse(saved).length > 0) {
-        remainingQuestions = JSON.parse(saved);
-    } else {
-        remainingQuestions = [...allQuestions];
-    }
-    loadNextQuestion();
-}
+    const canvas = document.getElementById('mainCanvas');
 
-function loadNextQuestion() {
-    if (remainingQuestions.length === 0) {
-        alert("مبروك! خلصت كل الأسئلة.");
-        localStorage.removeItem('kramlat_questions');
-        location.reload();
-        return;
-    }
+    const ctx = canvas.getContext('2d');
 
-    // إخفاء التقدم حتى يتم التفاعل (اختياري حسب طلبك)
-    // document.getElementById('progress-box').style.display = 'none';
+    const aiConsole = document.getElementById('ai-console');
 
-    // اختيار سؤال عشوائي
-    const randomIndex = Math.floor(Math.random() * remainingQuestions.length);
-    const qData = remainingQuestions[randomIndex];
+    const dotsLayer = document.getElementById('dots-layer');
+
     
-    // تخزين السؤال الحالي وحذفه من المصفوفة
-    window.currentQ = qData;
-    window.currentIndexInRemaining = randomIndex;
 
-    // عرض السؤال
-    document.getElementById('question').innerText = qData.question;
-    const optionsDiv = document.getElementById('options');
-    optionsDiv.innerHTML = '';
+    let isDrawing = false;
 
-    qData.options.forEach((opt, index) => {
-        const btn = document.createElement('button');
-        btn.className = 'option-btn';
-        btn.innerText = opt;
-        btn.onclick = () => checkAnswer(index, btn);
-        optionsDiv.appendChild(btn);
-    });
-}
+    let currentPath = []; // سيحتوي على اندكسات النقاط [0, 4, 8...]
 
-function checkAnswer(selectedIndex, btn) {
-    const correctIndex = window.currentQ.correct;
-    const allBtns = document.querySelectorAll('.option-btn');
-    
-    // إظهار شريط التقدم فور الإجابة
-    document.getElementById('progress-box').style.display = 'block';
-    
-    if (selectedIndex === correctIndex) {
-        btn.classList.add('correct');
-        score++;
-    } else {
-        btn.classList.add('wrong');
-        allBtns[correctIndex].classList.add('correct');
-    }
+    let wrongAttempts = JSON.parse(localStorage.getItem('forensic_patterns')) || [];
 
-    // تعطيل الأزرار بعد الإجابة
-    allBtns.forEach(b => b.disabled = true);
 
-    // تحديث شريط التقدم
-    const total = allQuestions.length;
-    const solved = total - remainingQuestions.length + 1;
-    const progressPercent = (solved / total) * 100;
-    document.getElementById('progress-bar').style.width = progressPercent + '%';
 
-    // إزالة السؤال من القائمة وحفظ التقدم
-    remainingQuestions.splice(window.currentIndexInRemaining, 1);
-    localStorage.setItem('kramlat_questions', JSON.stringify(remainingQuestions));
+    // إعداد نقاط الشبكة 3x3
 
-    // انتقال للسؤال التالي بعد ثانية ونصف
-    setTimeout(loadNextQuestion, 1500);
-}
+    const points = [];
 
-// وسيلة مساعدة: حذف إجابتين
-function useHalfHalf() {
-    const correct = window.currentQ.correct;
-    const btns = document.querySelectorAll('.option-btn');
-    let removed = 0;
-    
-    btns.forEach((btn, idx) => {
-        if (idx !== correct && removed < 2) {
-            btn.style.visibility = 'hidden';
-            removed++;
+    for(let i=0; i<3; i++) {
+
+        for(let j=0; j<3; j++) {
+
+            const x = (j + 1) * 80;
+
+            const y = (i + 1) * 80;
+
+            points.push({x, y});
+
+            const d = document.createElement('div');
+
+            d.className = 'dot';
+
+            d.style.left = x + 'px';
+
+            d.style.top = y + 'px';
+
+            d.id = `dot-${points.length-1}`;
+
+            dotsLayer.appendChild(d);
+
         }
-    });
-    document.getElementById('half-btn').disabled = true;
-}
 
-// وسيلة مساعدة: استطلاع الجمهور
-function useAudience() {
-    const correct = window.currentQ.correct;
-    alert(`الجمهور يرجح أن الإجابة هي: ${window.currentQ.options[correct]}`);
-    document.getElementById('audience-btn').disabled = true;
-}
+    }
 
-// تشغيل اللعبة
-initGame();
+
+
+    // منطق التفاعل
+
+    function getPos(e) {
+
+        const rect = canvas.getBoundingClientRect();
+
+        const cx = e.clientX || (e.touches && e.touches[0].clientX);
+
+        const cy = e.clientY || (e.touches && e.touches[0].clientY);
+
+        return { x: cx - rect.left, y: cy - rect.top };
+
+    }
+
+
+
+    function startDraw(e) {
+
+        isDrawing = true;
+
+        resetBoard();
+
+        handleMove(e);
+
+    }
+
+
+
+    function handleMove(e) {
+
+        if(!isDrawing) return;
+
+        const pos = getPos(e);
+
+
+
+        points.forEach((p, i) => {
+
+            const d = Math.hypot(p.x - pos.x, p.y - pos.y);
+
+            if(d < 25 && !currentPath.includes(i)) {
+
+                // معالجة القفز فوق نقطة
+
+                if(currentPath.length > 0) {
+
+                    const last = currentPath[currentPath.length-1];
+
+                    const mid = getMidPoint(last, i);
+
+                    if(mid !== null && !currentPath.includes(mid)) {
+
+                        addPointToPath(mid);
+
+                    }
+
+                }
+
+                addPointToPath(i);
+
+                checkSecurityConflict();
+
+            }
+
+        });
+
+        render();
+
+    }
+
+
+
+    function addPointToPath(idx) {
+
+        currentPath.push(idx);
+
+        const dot = document.getElementById(`dot-${idx}`);
+
+        dot.classList.add('active');
+
+        
+
+        // إضافة رقم الخطوة (1, 2, 3...)
+
+        const stepNum = document.createElement('div');
+
+        stepNum.className = 'step-number';
+
+        stepNum.innerText = currentPath.length;
+
+        dot.appendChild(stepNum);
+
+    }
+
+
+
+    function getMidPoint(p1, p2) {
+
+        const midMap = {
+
+            '0-2':1, '2-0':1, '0-6':3, '6-0':3, '0-8':4, '8-0':4,
+
+            '1-7':4, '7-1':4, '2-6':4, '6-2':4, '2-8':5, '8-2':5,
+
+            '3-5':4, '5-3':4, '6-8':7, '8-6':7
+
+        };
+
+        return midMap[`${p1}-${p2}`] ?? null;
+
+    }
+
+
+
+    function render() {
+
+        ctx.clearRect(0,0,320,320);
+
+        if(currentPath.length < 2) return;
+
+
+
+        ctx.beginPath();
+
+        ctx.lineWidth = 10;
+
+        ctx.lineCap = 'round';
+
+        ctx.lineJoin = 'round';
+
+        
+
+        const isDuplicate = wrongAttempts.includes(currentPath.join(''));
+
+        ctx.strokeStyle = isDuplicate ? '#ef4444' : '#3b82f6';
+
+
+
+        ctx.moveTo(points[currentPath[0]].x, points[currentPath[0]].y);
+
+        for(let i=1; i<currentPath.length; i++) {
+
+            ctx.lineTo(points[currentPath[i]].x, points[currentPath[i]].y);
+
+        }
+
+        ctx.stroke();
+
+
+
+        // تحديث إحصائيات حية
+
+        document.getElementById('complexity-val').innerText = (currentPath.length * 12.5).toFixed(0) + '%';
+
+        updateUntouchedCount();
+
+    }
+
+
+
+    function checkSecurityConflict() {
+
+        const s = currentPath.join('');
+
+        if(wrongAttempts.includes(s)) {
+
+            document.getElementById('status-alert').innerText = "⚠️ لقد جربت هذا الرمز مسبقاً وهو خاطئ!";
+
+        } else {
+
+            document.getElementById('status-alert').innerText = "";
+
+        }
+
+    }
+
+
+
+    function stopDraw() { isDrawing = false; }
+
+
+
+    // الأحداث
+
+    canvas.addEventListener('mousedown', startDraw);
+
+    canvas.addEventListener('mousemove', handleMove);
+
+    window.addEventListener('mouseup', stopDraw);
+
+    canvas.addEventListener('touchstart', (e) => { e.preventDefault(); startDraw(e); }, {passive:false});
+
+    canvas.addEventListener('touchmove', (e) => { e.preventDefault(); handleMove(e); }, {passive:false});
+
+    window.addEventListener('touchend', stopDraw);
+
+
+
+    // إدارة البيانات
+
+    function recordAttempt() {
+
+        if(currentPath.length < 4) {
+
+            alert("النمط الحقيقي لا يقل عن 4 نقاط.");
+
+            return;
+
+        }
+
+        const s = currentPath.join('');
+
+        if(!wrongAttempts.includes(s)) {
+
+            wrongAttempts.push(s);
+
+            localStorage.setItem('forensic_patterns', JSON.stringify(wrongAttempts));
+
+            updateHistoryUI();
+
+            resetBoard();
+
+            generateSmartSuggestions();
+
+        }
+
+    }
+
+
+
+    function resetBoard() {
+
+        currentPath = [];
+
+        ctx.clearRect(0,0,320,320);
+
+        document.querySelectorAll('.dot').forEach(d => {
+
+            d.classList.remove('active');
+
+            d.innerHTML = '';
+
+        });
+
+        document.getElementById('status-alert').innerText = "";
+
+    }
+
+
+
+    function updateHistoryUI() {
+
+        const container = document.getElementById('history-grid');
+
+        const list = document.getElementById('history-container');
+
+        list.innerHTML = '';
+
+        
+
+        wrongAttempts.forEach((pStr, idx) => {
+
+            const pArr = pStr.split('').map(Number);
+
+            const wrapper = document.createElement('div');
+
+            wrapper.className = 'history-thumb';
+
+            wrapper.innerHTML = `<canvas id="hist-${idx}" width="80" height="80"></canvas>
+
+                                 <div class="delete-hist" onclick="deleteEntry(${idx})">×</div>`;
+
+            list.appendChild(wrapper);
+
+            drawMini(`hist-${idx}`, pArr);
+
+        });
+
+    }
+
+
+
+    function deleteEntry(idx) {
+
+        wrongAttempts.splice(idx, 1);
+
+        localStorage.setItem('forensic_patterns', JSON.stringify(wrongAttempts));
+
+        updateHistoryUI();
+
+        generateSmartSuggestions();
+
+    }
+
+
+
+    function drawMini(id, path) {
+
+        const c = document.getElementById(id);
+
+        const mctx = c.getContext('2d');
+
+        const s = 80/4;
+
+        mctx.strokeStyle = '#6366f1';
+
+        mctx.lineWidth = 3;
+
+        mctx.beginPath();
+
+        mctx.moveTo((path[0]%3 + 1)*s, (Math.floor(path[0]/3) + 1)*s);
+
+        path.forEach(n => mctx.lineTo((n%3 + 1)*s, (Math.floor(n/3) + 1)*s));
+
+        mctx.stroke();
+
+        // نقطة البداية
+
+        mctx.fillStyle = '#10b981';
+
+        mctx.beginPath();
+
+        mctx.arc((path[0]%3 + 1)*s, (Math.floor(path[0]/3) + 1)*s, 3, 0, Math.PI*2);
+
+        mctx.fill();
+
+    }
+
+
+
+    function updateUntouchedCount() {
+
+        const allUsed = new Set(wrongAttempts.join('').split(''));
+
+        currentPath.forEach(n => allUsed.add(n.toString()));
+
+        document.getElementById('untouched-val').innerText = 9 - allUsed.size;
+
+    }
+
+
+
+    // خوارزمية الاقتراح الذكي
+
+    function generateSmartSuggestions() {
+
+        const grid = document.getElementById('suggestions-grid');
+
+        grid.innerHTML = '';
+
+        
+
+        // حساب أكثر النقاط إهمالاً
+
+        const counts = new Array(9).fill(0);
+
+        wrongAttempts.forEach(p => p.split('').forEach(n => counts[n]++));
+
+        
+
+        // توليد 20 نمطاً يركز على النقاط الأقل استخداماً
+
+        for(let i=0; i<15; i++) {
+
+            const p = generateNeglectedPattern(counts);
+
+            if(!wrongAttempts.includes(p.join(''))) {
+
+                const wrapper = document.createElement('div');
+
+                wrapper.className = 'mini-card';
+
+                wrapper.style = "background:#000; padding:5px; border-radius:10px; cursor:pointer; border:1px solid #1e293b";
+
+                wrapper.innerHTML = `<canvas id="sug-${i}" width="80" height="80"></canvas>`;
+
+                wrapper.onclick = () => loadPattern(p);
+
+                grid.appendChild(wrapper);
+
+                drawMini(`sug-${i}`, p);
+
+            }
+
+        }
+
+    }
+
+
+
+    function generateNeglectedPattern(counts) {
+
+        // العثور على أبرد النقاط
+
+        let coldPoints = counts.map((c, i) => ({i, c})).sort((a,b) => a.c - b.c).map(o => o.i);
+
+        let start = coldPoints[Math.floor(Math.random()*3)]; // ابدأ من أبرد 3 نقاط
+
+        
+
+        let path = [start];
+
+        let visited = new Array(9).fill(false);
+
+        visited[start] = true;
+
+
+
+        for(let j=0; j<Math.floor(Math.random()*3)+4; j++) {
+
+            let last = path[path.length-1];
+
+            let neighbors = [0,1,2,3,4,5,6,7,8].filter(n => !visited[n]);
+
+            if(neighbors.length === 0) break;
+
+            
+
+            let next = neighbors[Math.floor(Math.random()*neighbors.length)];
+
+            let mid = getMidPoint(last, next);
+
+            if(mid !== null && !visited[mid]) { path.push(mid); visited[mid] = true; }
+
+            path.push(next);
+
+            visited[next] = true;
+
+        }
+
+        return path;
+
+    }
+
+
+
+    function loadPattern(p) {
+
+        resetBoard();
+
+        p.forEach(n => addPointToPath(n));
+
+        render();
+
+        window.scrollTo({top: 0, behavior: 'smooth'});
+
+    }
+
+
+
+    // استشارة الذكاء الاصطناعي
+
+    async function consultAi() {
+
+        aiConsole.style.display = 'block';
+
+        aiConsole.innerHTML = `<span class="loading-dots">جاري تحليل النمط سيكولوجياً وتقنياً</span>`;
+
+        
+
+        const history = wrongAttempts.slice(-10).join(' | ');
+
+        const current = currentPath.join(' -> ');
+
+        
+
+        const prompt = `أنا أحاول تذكر نمط القفل. محاولاتي الخاطئة الأخيرة: [${history}]. النمط الذي رسمته للتو: [${current}]. 
+
+        بصفتك خبيراً:
+
+        1. هل النمط الحالي شائع جداً لدرجة استبعاده؟
+
+        2. بناءً على المحاولات الخاطئة، ما هي "الزاوية" أو "المنطقة" التي يميل عقلي لتجاهلها؟
+
+        3. اقترح عليّ حركة تبدأ من نقطة لم أستخدمها كثيراً.
+
+        أجب باختصار شديد ولهجة مساعدة بالعربية.`;
+
+
+
+        try {
+
+            const resp = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-preview-09-2025:generateContent?key=${apiKey}`, {
+
+                method: 'POST',
+
+                headers: {'Content-Type': 'application/json'},
+
+                body: JSON.stringify({ contents: [{ parts: [{ text: prompt }] }] })
+
+            });
+
+            const data = await resp.json();
+
+            aiConsole.innerHTML = `<strong>رأي المحلل الذكي:</strong><br>${data.candidates[0].content.parts[0].text}`;
+
+        } catch(e) {
+
+            aiConsole.innerText = "تعذر الاتصال بالخادم. يرجى المحاولة لاحقاً.";
+
+        }
+
+    }
+
+
+
+    // تشغيل أولي
+
+    updateHistoryUI();
+
+    generateSmartSuggestions();
+
+
 
 </script>
+
+
+
 </body>
+
 </html>
+
+ظبط جزء الاقترحات و حوش الذكاء الاصطناعي طالما هو مش موجود اصلا  زي مانا طلبت منك اني مش عايز منظر و خلاص و خلي ازار الاقترحات احسن ال زر الفوق خلي اني ممكن اقترح رمز جديدو ال هو عطهولى ولا صح ولا غلط و الجزء بتاع الاقترحات ال تحت خليه يعرض الشكل بتاع النمط ال هو جايبه حط مميزات كتير تختصر عليا و قت و كمان عايزه يقترح عليا في مكان تاني يعرضلي ١٠٠ نمط كل مره ادوس ريفرش يحدث الانماط و كده انا عايز حاجه تساعدني بجد ما تركز معايا بقى حط مميزات تساعدني و زود على انا قولته
