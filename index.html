@@ -1,1013 +1,517 @@
 <!DOCTYPE html>
-
 <html lang="ar" dir="rtl">
-
 <head>
-
     <meta charset="UTF-8">
-
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-
-    <title>Pattern Recovery Pro - المحلل الذكي</title>
-
+    <title>Pattern Detective Pro + Gemini AI</title>
     <style>
-
         :root {
-
-            --bg: #030712;
-
-            --card: #111827;
-
-            --primary: #3b82f6;
-
-            --accent: #10b981;
-
-            --danger: #ef4444;
-
-            --text: #f9fafb;
-
-            --sub-text: #9ca3af;
-
+            --bg: #0d1117;
+            --card: #161b22;
+            --primary: #58a6ff;
+            --accent: #238636;
+            --danger: #f85149;
+            --text: #c9d1d9;
+            --border: #30363d;
+            --ai-glow: #a371f7;
         }
-
-
 
         body {
-
-            font-family: 'Segoe UI', system-ui, sans-serif;
-
+            font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
             background-color: var(--bg);
-
             color: var(--text);
-
             margin: 0;
-
-            padding: 10px;
-
-            display: flex;
-
-            justify-content: center;
-
+            padding: 15px;
+            line-height: 1.6;
         }
 
-
-
-        .main-grid {
-
-            width: 100%;
-
-            max-width: 1100px;
-
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
             display: grid;
-
             grid-template-columns: 1fr;
-
             gap: 20px;
-
         }
 
-
-
-        @media (min-width: 1024px) {
-
-            .main-grid { grid-template-columns: 400px 1fr; }
-
-            .full-row { grid-column: span 2; }
-
+        @media (min-width: 900px) {
+            .container { grid-template-columns: 400px 1fr; }
         }
-
-
 
         .card {
-
             background: var(--card);
-
-            border-radius: 24px;
-
+            border: 1px solid var(--border);
+            border-radius: 16px;
             padding: 24px;
-
-            border: 1px solid #1f2937;
-
-            box-shadow: 0 25px 50px -12px rgba(0,0,0,0.5);
-
+            box-shadow: 0 8px 24px rgba(0,0,0,0.5);
         }
 
+        h2 { font-size: 1.2rem; margin-top: 0; color: var(--primary); display: flex; align-items: center; gap: 10px; border-bottom: 1px solid var(--border); padding-bottom: 12px; }
 
-
-        h2 { font-size: 1.25rem; margin-top: 0; display: flex; align-items: center; gap: 10px; color: var(--primary); }
-
-
-
-        /* لوحة الرسم */
-
-        #board-wrapper {
-
+        /* Board Style */
+        #board-container {
             position: relative;
-
             width: 320px;
-
             height: 320px;
-
             margin: 20px auto;
-
-            background: radial-gradient(circle, #1e293b 0%, #0f172a 100%);
-
+            background: radial-gradient(circle, #1c2128 0%, #0d1117 100%);
             border-radius: 20px;
-
             touch-action: none;
-
+            border: 2px solid var(--border);
             box-shadow: inset 0 0 20px rgba(0,0,0,0.5);
-
         }
 
-
-
-        canvas { position: absolute; top: 0; left: 0; z-index: 20; }
-
-
+        canvas { position: absolute; top: 0; left: 0; z-index: 10; cursor: crosshair; }
 
         .dot {
-
             position: absolute;
-
             width: 16px;
-
             height: 16px;
-
-            background: #4b5563;
-
+            background: #484f58;
             border-radius: 50%;
-
             transform: translate(-50%, -50%);
-
             z-index: 5;
-
-            transition: 0.3s;
-
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
         }
 
+        .dot.active { background: var(--primary); box-shadow: 0 0 20px var(--primary); transform: translate(-50%, -50%) scale(1.2); }
 
-
-        .dot.active { background: var(--primary); box-shadow: 0 0 20px var(--primary); }
-
-        
-
-        .step-number {
-
+        .step-badge {
             position: absolute;
-
-            color: white;
-
-            font-size: 12px;
-
-            font-weight: bold;
-
-            background: var(--accent);
-
-            width: 18px;
-
-            height: 18px;
-
+            background: var(--primary);
+            color: #000;
+            font-size: 11px;
+            width: 20px;
+            height: 20px;
             border-radius: 50%;
-
             display: flex;
-
             align-items: center;
-
             justify-content: center;
-
-            transform: translate(10px, -25px);
-
-            z-index: 30;
-
-            pointer-events: none;
-
+            transform: translate(12px, -24px);
+            font-weight: 800;
+            z-index: 12;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.5);
         }
 
-
-
-        /* الإحصائيات */
-
-        .analytics {
-
-            display: grid;
-
-            grid-template-columns: 1fr 1fr;
-
-            gap: 10px;
-
-            margin-bottom: 20px;
-
-        }
-
-
-
-        .stat-item {
-
-            background: #1f2937;
-
-            padding: 10px;
-
-            border-radius: 12px;
-
-            text-align: center;
-
-        }
-
-
-
-        .stat-val { font-size: 1.1rem; font-weight: bold; color: var(--accent); display: block; }
-
-        .stat-label { font-size: 0.7rem; color: var(--sub-text); }
-
-
-
-        /* أزرار */
-
+        /* Controls */
+        .controls { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-top: 20px; }
         .btn {
+            padding: 14px; border: 1px solid var(--border); border-radius: 10px; 
+            background: #21262d; color: var(--text); cursor: pointer; font-weight: 600;
+            transition: 0.3s; display: flex; align-items: center; justify-content: center; gap: 8px;
+            font-size: 0.9rem;
+        }
+        .btn:hover { background: #30363d; transform: translateY(-2px); border-color: #8b949e; }
+        .btn-main { background: var(--primary); color: #0d1117; border: none; }
+        .btn-main:hover { background: #79c0ff; box-shadow: 0 0 15px rgba(88, 166, 255, 0.4); }
+        .btn-ai { background: linear-gradient(135deg, #a371f7, #58a6ff); color: white; border: none; grid-column: span 2; position: relative; overflow: hidden; }
+        .btn-ai::after { content: ''; position: absolute; top: -50%; left: -50%; width: 200%; height: 200%; background: linear-gradient(45deg, transparent, rgba(255,255,255,0.1), transparent); transform: rotate(45deg); animation: shine 3s infinite; }
+        
+        @keyframes shine { 0% { left: -100%; } 100% { left: 100%; } }
 
-            width: 100%;
-
-            padding: 14px;
-
+        /* Feedback & AI Box */
+        #ai-panel {
+            margin-top: 20px;
+            padding: 20px;
+            background: rgba(163, 113, 247, 0.05);
+            border: 1px dashed var(--ai-glow);
             border-radius: 12px;
-
-            border: none;
-
-            font-weight: bold;
-
-            cursor: pointer;
-
-            transition: 0.2s;
-
-            margin-bottom: 8px;
-
-            display: flex;
-
-            align-items: center;
-
-            justify-content: center;
-
-            gap: 8px;
-
-        }
-
-        .btn-primary { background: var(--primary); color: white; }
-
-        .btn-secondary { background: #374151; color: white; }
-
-        .btn-danger { background: #991b1b; color: white; }
-
-        .btn-ai { background: linear-gradient(45deg, #7c3aed, #2563eb); color: white; }
-
-        .btn:hover { filter: brightness(1.1); transform: translateY(-1px); }
-
-
-
-        /* سجل الأخطاء */
-
-        .history-grid {
-
-            display: grid;
-
-            grid-template-columns: repeat(auto-fill, minmax(90px, 1fr));
-
-            gap: 10px;
-
-            max-height: 250px;
-
-            overflow-y: auto;
-
-            padding: 5px;
-
-        }
-
-
-
-        .history-thumb {
-
-            background: #000;
-
-            border-radius: 10px;
-
-            border: 1px solid #374151;
-
-            padding: 5px;
-
-            position: relative;
-
-        }
-
-        .history-thumb canvas { position: static; }
-
-        .delete-hist { position: absolute; top: -5px; right: -5px; background: var(--danger); border-radius: 50%; width: 15px; height: 15px; font-size: 10px; cursor: pointer; display: flex; align-items: center; justify-content: center; }
-
-
-
-        /* ذكاء اصطناعي */
-
-        #ai-console {
-
-            margin-top: 15px;
-
-            padding: 15px;
-
-            background: #000;
-
-            border-radius: 12px;
-
-            border-right: 4px solid var(--primary);
-
-            font-size: 0.85rem;
-
-            line-height: 1.6;
-
             display: none;
-
         }
 
+        .ai-content { font-size: 0.95rem; line-height: 1.7; color: #e6edf3; }
+        .ai-title { color: var(--ai-glow); font-weight: bold; margin-bottom: 8px; display: flex; align-items: center; gap: 8px; }
 
+        .loading-shimmer {
+            background: linear-gradient(90deg, #30363d 25%, #484f58 50%, #30363d 75%);
+            background-size: 200% 100%;
+            animation: shimmer 1.5s infinite;
+            height: 1rem; border-radius: 4px; margin-bottom: 8px;
+        }
+        @keyframes shimmer { 0% { background-position: 200% 0; } 100% { background-position: -200% 0; } }
 
-        .loading-dots:after { content: '...'; animation: dots 1.5s steps(5, end) infinite; }
+        /* Grids */
+        .scroll-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(110px, 1fr));
+            gap: 15px;
+            max-height: 400px;
+            overflow-y: auto;
+            padding: 10px;
+            background: #010409;
+            border-radius: 12px;
+            border: 1px solid var(--border);
+        }
 
-        @keyframes dots { 0%, 20% { content: ''; } 40% { content: '.'; } 60% { content: '..'; } 80% { content: '...'; } }
+        .mini-pattern {
+            background: #161b22;
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            padding: 10px;
+            cursor: pointer;
+            transition: 0.2s;
+            position: relative;
+        }
+        .mini-pattern:hover { border-color: var(--primary); background: #1c2128; transform: scale(1.05); }
+        .mini-pattern canvas { position: static; pointer-events: none; }
 
+        .status-bar { text-align: center; font-size: 0.85rem; height: 24px; color: var(--danger); margin-top: 8px; font-weight: 500; }
+        .badge-count { background: var(--border); padding: 4px 12px; border-radius: 20px; font-size: 0.75rem; color: var(--primary); }
     </style>
-
 </head>
-
 <body>
 
-
-
-<div class="main-grid">
-
-    
-
-    <!-- عمود التحكم -->
-
+<div class="container">
+    <!-- لوحة الرسم الرئيسية -->
     <div class="card">
-
-        <h2>🛠️ وحدة التحكم</h2>
-
+        <h2>✏️ فحص الذاكرة <span id="step-count" class="badge-count">0 حركات</span></h2>
         
-
-        <div id="board-wrapper">
-
+        <div id="board-container">
             <div id="dots-layer"></div>
-
             <canvas id="mainCanvas" width="320" height="320"></canvas>
-
         </div>
 
+        <div id="error-msg" class="status-bar"></div>
 
-
-        <div class="analytics">
-
-            <div class="stat-item">
-
-                <span class="stat-label">تعقيد النمط</span>
-
-                <span id="complexity-val" class="stat-val">0%</span>
-
-            </div>
-
-            <div class="stat-item">
-
-                <span class="stat-label">نقاط لم تُلمس</span>
-
-                <span id="untouched-val" class="stat-val">9</span>
-
-            </div>
-
+        <div class="controls">
+            <button class="btn btn-main" onclick="saveWrongAttempt()">❌ تسجيل محاولة خاطئة</button>
+            <button class="btn" onclick="clearBoard()">🧹 مسح اللوحة</button>
+            <button class="btn btn-ai" onclick="runGeminiAnalysis()">✨ تحليل ✨ استنتاج Gemini الذكي</button>
+            <button class="btn btn-ai" style="background: #30363d; border: 1px solid var(--ai-glow);" onclick="getMuscleMemoryExercise()">✨ تمرين الذاكرة العضلية</button>
         </div>
 
-
-
-        <div id="status-alert" style="color:var(--danger); font-size: 0.8rem; text-align: center; min-height: 20px; margin-bottom: 5px;"></div>
-
-
-
-        <button class="btn btn-primary" onclick="recordAttempt()">❌ تسجيل كمحاولة خاطئة</button>
-
-        <button class="btn btn-secondary" onclick="resetBoard()">🧹 مسح اللوحة</button>
-
-        <button class="btn btn-ai" onclick="consultAi()">🤖 تحليل الذكاء الاصطناعي</button>
-
-        
-
-        <div id="ai-console"></div>
-
+        <div id="ai-panel">
+            <div class="ai-title">🤖 مساعد Gemini الذكي:</div>
+            <div id="ai-content" class="ai-content"></div>
+        </div>
     </div>
 
-
-
-    <!-- عمود البيانات -->
-
+    <!-- سجل الأخطاء والمقترحات -->
     <div class="card">
-
-        <h2>🕵️ تحليل المحاولات الخاطئة</h2>
-
-        <div id="history-container" class="history-grid">
-
-            <!-- سيتم ملؤه بواسطة JS -->
-
+        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:15px;">
+            <h2 style="margin:0">🔍 المحاولات المستبعدة (السجل)</h2>
+            <button class="btn" style="padding:5px 15px; font-size:0.75rem; color:var(--danger);" onclick="resetHistory()">حذف الكل</button>
+        </div>
+        <div id="history-list" class="scroll-grid" style="max-height: 200px;">
+            <!-- سيتم الملء بواسطة JS -->
         </div>
 
-
-
-        <h2 style="margin-top:30px;">💡 احتمالات مقترحة (بناءً على النقص)</h2>
-
-        <p style="font-size:0.75rem; color:var(--sub-text)">يقوم النظام بتوليد أنماط تركز على النقاط التي نادراً ما استخدمتها في محاولاتك السابقة.</p>
-
-        <div id="suggestions-grid" class="history-grid" style="max-height: 400px;">
-
-            <!-- اقتراحات ذكية -->
-
+        <div style="display:flex; justify-content:space-between; align-items:center; margin-top:30px; margin-bottom:15px;">
+            <h2 style="margin:0">💡 بنك الاحتمالات (100 نمط ذكي)</h2>
+            <button class="btn btn-main" style="padding:5px 15px; font-size:0.75rem" onclick="generateMassPatterns()">تحديث القائمة 🔄</button>
         </div>
-
+        <div id="suggestion-grid" class="scroll-grid" style="max-height: 500px;">
+            <!-- سيتم الملء بواسطة JS -->
+        </div>
     </div>
-
-
-
 </div>
 
-
-
 <script>
-
+    // إعدادات البيئة
     const apiKey = ""; 
-
-    const canvas = document.getElementById('mainCanvas');
-
-    const ctx = canvas.getContext('2d');
-
-    const aiConsole = document.getElementById('ai-console');
-
-    const dotsLayer = document.getElementById('dots-layer');
-
+    const appId = typeof __app_id !== 'undefined' ? __app_id : 'pattern-detective-v2';
     
+    const canvas = document.getElementById('mainCanvas');
+    const ctx = canvas.getContext('2d');
+    const errorMsg = document.getElementById('error-msg');
+    const aiPanel = document.getElementById('ai-panel');
+    const aiContent = document.getElementById('ai-content');
 
     let isDrawing = false;
+    let currentPath = [];
+    let wrongPaths = JSON.parse(localStorage.getItem('lock_detective_pro_data')) || [];
 
-    let currentPath = []; // سيحتوي على اندكسات النقاط [0, 4, 8...]
-
-    let wrongAttempts = JSON.parse(localStorage.getItem('forensic_patterns')) || [];
-
-
-
-    // إعداد نقاط الشبكة 3x3
-
+    // إنشاء شبكة النقاط 3x3
     const points = [];
-
-    for(let i=0; i<3; i++) {
-
-        for(let j=0; j<3; j++) {
-
+    const dotsLayer = document.getElementById('dots-layer');
+    for (let i = 0; i < 3; i++) {
+        for (let j = 0; j < 3; j++) {
             const x = (j + 1) * 80;
-
             const y = (i + 1) * 80;
-
-            points.push({x, y});
-
-            const d = document.createElement('div');
-
-            d.className = 'dot';
-
-            d.style.left = x + 'px';
-
-            d.style.top = y + 'px';
-
-            d.id = `dot-${points.length-1}`;
-
-            dotsLayer.appendChild(d);
-
+            points.push({ x, y });
+            const dot = document.createElement('div');
+            dot.className = 'dot';
+            dot.style.left = `${x}px`;
+            dot.style.top = `${y}px`;
+            dot.id = `dot-${points.length - 1}`;
+            dotsLayer.appendChild(dot);
         }
-
     }
 
-
-
-    // منطق التفاعل
-
+    // منطق الرسم
     function getPos(e) {
-
         const rect = canvas.getBoundingClientRect();
-
         const cx = e.clientX || (e.touches && e.touches[0].clientX);
-
         const cy = e.clientY || (e.touches && e.touches[0].clientY);
-
         return { x: cx - rect.left, y: cy - rect.top };
-
     }
 
-
-
-    function startDraw(e) {
-
+    function startDrawing(e) {
         isDrawing = true;
-
-        resetBoard();
-
-        handleMove(e);
-
+        clearBoard();
+        handleDrawing(e);
     }
 
-
-
-    function handleMove(e) {
-
-        if(!isDrawing) return;
-
+    function handleDrawing(e) {
+        if (!isDrawing) return;
         const pos = getPos(e);
 
-
-
         points.forEach((p, i) => {
-
-            const d = Math.hypot(p.x - pos.x, p.y - pos.y);
-
-            if(d < 25 && !currentPath.includes(i)) {
-
-                // معالجة القفز فوق نقطة
-
-                if(currentPath.length > 0) {
-
-                    const last = currentPath[currentPath.length-1];
-
+            const dist = Math.hypot(p.x - pos.x, p.y - pos.y);
+            if (dist < 28 && !currentPath.includes(i)) {
+                if (currentPath.length > 0) {
+                    const last = currentPath[currentPath.length - 1];
                     const mid = getMidPoint(last, i);
-
-                    if(mid !== null && !currentPath.includes(mid)) {
-
-                        addPointToPath(mid);
-
-                    }
-
+                    if (mid !== null && !currentPath.includes(mid)) addPoint(mid);
                 }
-
-                addPointToPath(i);
-
-                checkSecurityConflict();
-
+                addPoint(i);
             }
-
         });
-
-        render();
-
+        renderFrame();
     }
 
-
-
-    function addPointToPath(idx) {
-
+    function addPoint(idx) {
         currentPath.push(idx);
-
         const dot = document.getElementById(`dot-${idx}`);
-
         dot.classList.add('active');
-
         
-
-        // إضافة رقم الخطوة (1, 2, 3...)
-
-        const stepNum = document.createElement('div');
-
-        stepNum.className = 'step-number';
-
-        stepNum.innerText = currentPath.length;
-
-        dot.appendChild(stepNum);
-
+        const badge = document.createElement('div');
+        badge.className = 'step-badge';
+        badge.innerText = currentPath.length;
+        dot.appendChild(badge);
+        
+        document.getElementById('step-count').innerText = `${currentPath.length} حركات`;
+        validatePath();
     }
-
-
 
     function getMidPoint(p1, p2) {
-
-        const midMap = {
-
-            '0-2':1, '2-0':1, '0-6':3, '6-0':3, '0-8':4, '8-0':4,
-
-            '1-7':4, '7-1':4, '2-6':4, '6-2':4, '2-8':5, '8-2':5,
-
-            '3-5':4, '5-3':4, '6-8':7, '8-6':7
-
+        const mids = {
+            '0-2': 1, '2-0': 1, '0-6': 3, '6-0': 3, '0-8': 4, '8-0': 4,
+            '1-7': 4, '7-1': 4, '2-6': 4, '6-2': 4, '2-8': 5, '8-2': 5,
+            '3-5': 4, '5-3': 4, '6-8': 7, '8-6': 7
         };
-
-        return midMap[`${p1}-${p2}`] ?? null;
-
+        return mids[`${p1}-${p2}`] ?? null;
     }
 
-
-
-    function render() {
-
-        ctx.clearRect(0,0,320,320);
-
-        if(currentPath.length < 2) return;
-
-
+    function renderFrame() {
+        ctx.clearRect(0, 0, 320, 320);
+        if (currentPath.length < 2) return;
 
         ctx.beginPath();
-
-        ctx.lineWidth = 10;
-
+        ctx.lineWidth = 12;
         ctx.lineCap = 'round';
-
         ctx.lineJoin = 'round';
-
+        ctx.strokeStyle = wrongPaths.includes(currentPath.join('')) ? '#f85149' : '#58a6ff';
         
-
-        const isDuplicate = wrongAttempts.includes(currentPath.join(''));
-
-        ctx.strokeStyle = isDuplicate ? '#ef4444' : '#3b82f6';
-
-
-
         ctx.moveTo(points[currentPath[0]].x, points[currentPath[0]].y);
-
-        for(let i=1; i<currentPath.length; i++) {
-
+        for (let i = 1; i < currentPath.length; i++) {
             ctx.lineTo(points[currentPath[i]].x, points[currentPath[i]].y);
-
         }
-
         ctx.stroke();
-
-
-
-        // تحديث إحصائيات حية
-
-        document.getElementById('complexity-val').innerText = (currentPath.length * 12.5).toFixed(0) + '%';
-
-        updateUntouchedCount();
-
     }
 
-
-
-    function checkSecurityConflict() {
-
-        const s = currentPath.join('');
-
-        if(wrongAttempts.includes(s)) {
-
-            document.getElementById('status-alert').innerText = "⚠️ لقد جربت هذا الرمز مسبقاً وهو خاطئ!";
-
+    function validatePath() {
+        if (wrongPaths.includes(currentPath.join(''))) {
+            errorMsg.innerText = "⚠️ لقد جربت هذا المسار من قبل!";
         } else {
-
-            document.getElementById('status-alert').innerText = "";
-
+            errorMsg.innerText = "";
         }
-
     }
 
+    function stopDrawing() { isDrawing = false; }
 
-
-    function stopDraw() { isDrawing = false; }
-
-
-
-    // الأحداث
-
-    canvas.addEventListener('mousedown', startDraw);
-
-    canvas.addEventListener('mousemove', handleMove);
-
-    window.addEventListener('mouseup', stopDraw);
-
-    canvas.addEventListener('touchstart', (e) => { e.preventDefault(); startDraw(e); }, {passive:false});
-
-    canvas.addEventListener('touchmove', (e) => { e.preventDefault(); handleMove(e); }, {passive:false});
-
-    window.addEventListener('touchend', stopDraw);
-
-
+    canvas.addEventListener('mousedown', startDrawing);
+    canvas.addEventListener('mousemove', handleDrawing);
+    window.addEventListener('mouseup', stopDrawing);
+    canvas.addEventListener('touchstart', (e) => { e.preventDefault(); startDrawing(e); }, {passive: false});
+    canvas.addEventListener('touchmove', (e) => { e.preventDefault(); handleDrawing(e); }, {passive: false});
+    window.addEventListener('touchend', stopDrawing);
 
     // إدارة البيانات
-
-    function recordAttempt() {
-
-        if(currentPath.length < 4) {
-
-            alert("النمط الحقيقي لا يقل عن 4 نقاط.");
-
+    function saveWrongAttempt() {
+        if (currentPath.length < 4) {
+            errorMsg.innerText = "النمط يجب أن يحتوي على 4 نقاط على الأقل.";
             return;
-
         }
-
-        const s = currentPath.join('');
-
-        if(!wrongAttempts.includes(s)) {
-
-            wrongAttempts.push(s);
-
-            localStorage.setItem('forensic_patterns', JSON.stringify(wrongAttempts));
-
+        const pStr = currentPath.join('');
+        if (!wrongPaths.includes(pStr)) {
+            wrongPaths.push(pStr);
+            localStorage.setItem('lock_detective_pro_data', JSON.stringify(wrongPaths));
             updateHistoryUI();
-
-            resetBoard();
-
-            generateSmartSuggestions();
-
+            generateMassPatterns();
+            clearBoard();
         }
-
     }
 
-
-
-    function resetBoard() {
-
+    function clearBoard() {
         currentPath = [];
-
-        ctx.clearRect(0,0,320,320);
-
+        ctx.clearRect(0, 0, 320, 320);
         document.querySelectorAll('.dot').forEach(d => {
-
             d.classList.remove('active');
-
             d.innerHTML = '';
-
         });
-
-        document.getElementById('status-alert').innerText = "";
-
+        document.getElementById('step-count').innerText = "0 حركات";
+        errorMsg.innerText = "";
     }
-
-
 
     function updateHistoryUI() {
-
-        const container = document.getElementById('history-grid');
-
-        const list = document.getElementById('history-container');
-
+        const list = document.getElementById('history-list');
         list.innerHTML = '';
-
-        
-
-        wrongAttempts.forEach((pStr, idx) => {
-
+        [...wrongPaths].reverse().forEach((pStr, idx) => {
             const pArr = pStr.split('').map(Number);
-
-            const wrapper = document.createElement('div');
-
-            wrapper.className = 'history-thumb';
-
-            wrapper.innerHTML = `<canvas id="hist-${idx}" width="80" height="80"></canvas>
-
-                                 <div class="delete-hist" onclick="deleteEntry(${idx})">×</div>`;
-
-            list.appendChild(wrapper);
-
-            drawMini(`hist-${idx}`, pArr);
-
+            const item = document.createElement('div');
+            item.className = 'mini-pattern';
+            item.innerHTML = `<canvas id="hist-${idx}" width="90" height="90"></canvas>`;
+            item.onclick = () => loadPattern(pArr);
+            list.appendChild(item);
+            drawMini(`hist-${idx}`, pArr, '#f85149');
         });
-
     }
 
-
-
-    function deleteEntry(idx) {
-
-        wrongAttempts.splice(idx, 1);
-
-        localStorage.setItem('forensic_patterns', JSON.stringify(wrongAttempts));
-
-        updateHistoryUI();
-
-        generateSmartSuggestions();
-
-    }
-
-
-
-    function drawMini(id, path) {
-
+    function drawMini(id, path, color) {
         const c = document.getElementById(id);
-
+        if(!c) return;
         const mctx = c.getContext('2d');
-
-        const s = 80/4;
-
-        mctx.strokeStyle = '#6366f1';
-
-        mctx.lineWidth = 3;
-
+        const s = 90/4;
+        mctx.strokeStyle = color;
+        mctx.lineWidth = 5;
+        mctx.lineCap = 'round';
         mctx.beginPath();
-
         mctx.moveTo((path[0]%3 + 1)*s, (Math.floor(path[0]/3) + 1)*s);
-
         path.forEach(n => mctx.lineTo((n%3 + 1)*s, (Math.floor(n/3) + 1)*s));
-
         mctx.stroke();
-
-        // نقطة البداية
-
-        mctx.fillStyle = '#10b981';
-
+        // نقطة البداية المميزة
+        mctx.fillStyle = '#fff';
         mctx.beginPath();
-
-        mctx.arc((path[0]%3 + 1)*s, (Math.floor(path[0]/3) + 1)*s, 3, 0, Math.PI*2);
-
+        mctx.arc((path[0]%3 + 1)*s, (Math.floor(path[0]/3) + 1)*s, 4, 0, Math.PI*2);
         mctx.fill();
-
     }
 
-
-
-    function updateUntouchedCount() {
-
-        const allUsed = new Set(wrongAttempts.join('').split(''));
-
-        currentPath.forEach(n => allUsed.add(n.toString()));
-
-        document.getElementById('untouched-val').innerText = 9 - allUsed.size;
-
-    }
-
-
-
-    // خوارزمية الاقتراح الذكي
-
-    function generateSmartSuggestions() {
-
-        const grid = document.getElementById('suggestions-grid');
-
-        grid.innerHTML = '';
-
+    function generateMassPatterns() {
+        const grid = document.getElementById('suggestion-grid');
+        grid.innerHTML = '<div style="grid-column: 1/-1; text-align:center; padding:30px; color:#8b949e;">جاري تحليل الأنماط الفاشلة وتوليد 100 احتمال جديد...</div>';
         
-
-        // حساب أكثر النقاط إهمالاً
-
-        const counts = new Array(9).fill(0);
-
-        wrongAttempts.forEach(p => p.split('').forEach(n => counts[n]++));
-
-        
-
-        // توليد 20 نمطاً يركز على النقاط الأقل استخداماً
-
-        for(let i=0; i<15; i++) {
-
-            const p = generateNeglectedPattern(counts);
-
-            if(!wrongAttempts.includes(p.join(''))) {
-
-                const wrapper = document.createElement('div');
-
-                wrapper.className = 'mini-card';
-
-                wrapper.style = "background:#000; padding:5px; border-radius:10px; cursor:pointer; border:1px solid #1e293b";
-
-                wrapper.innerHTML = `<canvas id="sug-${i}" width="80" height="80"></canvas>`;
-
-                wrapper.onclick = () => loadPattern(p);
-
-                grid.appendChild(wrapper);
-
-                drawMini(`sug-${i}`, p);
-
+        setTimeout(() => {
+            grid.innerHTML = '';
+            let count = 0;
+            let safetyLimit = 0;
+            while (count < 100 && safetyLimit < 1500) {
+                const p = createHeuristicPattern();
+                if (!wrongPaths.includes(p.join(''))) {
+                    const item = document.createElement('div');
+                    item.className = 'mini-pattern';
+                    item.innerHTML = `<canvas id="sug-${count}" width="90" height="90"></canvas>`;
+                    item.onclick = () => loadPattern(p);
+                    grid.appendChild(item);
+                    drawMini(`sug-${count}`, p, '#238636');
+                    count++;
+                }
+                safetyLimit++;
             }
-
-        }
-
+        }, 100);
     }
 
-
-
-    function generateNeglectedPattern(counts) {
-
-        // العثور على أبرد النقاط
-
-        let coldPoints = counts.map((c, i) => ({i, c})).sort((a,b) => a.c - b.c).map(o => o.i);
-
-        let start = coldPoints[Math.floor(Math.random()*3)]; // ابدأ من أبرد 3 نقاط
-
-        
-
-        let path = [start];
-
+    function createHeuristicPattern() {
+        const length = Math.floor(Math.random() * 5) + 4;
+        let path = [Math.floor(Math.random() * 9)];
         let visited = new Array(9).fill(false);
+        visited[path[0]] = true;
 
-        visited[start] = true;
-
-
-
-        for(let j=0; j<Math.floor(Math.random()*3)+4; j++) {
-
-            let last = path[path.length-1];
-
-            let neighbors = [0,1,2,3,4,5,6,7,8].filter(n => !visited[n]);
-
-            if(neighbors.length === 0) break;
-
+        while (path.length < length) {
+            let last = path[path.length - 1];
+            let options = [0,1,2,3,4,5,6,7,8].filter(n => !visited[n]);
+            if (options.length === 0) break;
             
-
-            let next = neighbors[Math.floor(Math.random()*neighbors.length)];
-
-            let mid = getMidPoint(last, next);
-
-            if(mid !== null && !visited[mid]) { path.push(mid); visited[mid] = true; }
-
-            path.push(next);
-
-            visited[next] = true;
-
-        }
-
-        return path;
-
-    }
-
-
-
-    function loadPattern(p) {
-
-        resetBoard();
-
-        p.forEach(n => addPointToPath(n));
-
-        render();
-
-        window.scrollTo({top: 0, behavior: 'smooth'});
-
-    }
-
-
-
-    // استشارة الذكاء الاصطناعي
-
-    async function consultAi() {
-
-        aiConsole.style.display = 'block';
-
-        aiConsole.innerHTML = `<span class="loading-dots">جاري تحليل النمط سيكولوجياً وتقنياً</span>`;
-
-        
-
-        const history = wrongAttempts.slice(-10).join(' | ');
-
-        const current = currentPath.join(' -> ');
-
-        
-
-        const prompt = `أنا أحاول تذكر نمط القفل. محاولاتي الخاطئة الأخيرة: [${history}]. النمط الذي رسمته للتو: [${current}]. 
-
-        بصفتك خبيراً:
-
-        1. هل النمط الحالي شائع جداً لدرجة استبعاده؟
-
-        2. بناءً على المحاولات الخاطئة، ما هي "الزاوية" أو "المنطقة" التي يميل عقلي لتجاهلها؟
-
-        3. اقترح عليّ حركة تبدأ من نقطة لم أستخدمها كثيراً.
-
-        أجب باختصار شديد ولهجة مساعدة بالعربية.`;
-
-
-
-        try {
-
-            const resp = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-preview-09-2025:generateContent?key=${apiKey}`, {
-
-                method: 'POST',
-
-                headers: {'Content-Type': 'application/json'},
-
-                body: JSON.stringify({ contents: [{ parts: [{ text: prompt }] }] })
-
+            // محاكاة حركة اليد الطبيعية (تفضيل المجاورات)
+            options.sort((a, b) => {
+                const distA = Math.hypot((a%3)-(last%3), Math.floor(a/3)-Math.floor(last/3));
+                const distB = Math.hypot((b%3)-(last%3), Math.floor(b/3)-Math.floor(last/3));
+                return distA - distB;
             });
 
-            const data = await resp.json();
-
-            aiConsole.innerHTML = `<strong>رأي المحلل الذكي:</strong><br>${data.candidates[0].content.parts[0].text}`;
-
-        } catch(e) {
-
-            aiConsole.innerText = "تعذر الاتصال بالخادم. يرجى المحاولة لاحقاً.";
-
+            let next = options[Math.floor(Math.random() * Math.min(2, options.length))];
+            let mid = getMidPoint(last, next);
+            if (mid !== null && !visited[mid]) {
+                path.push(mid);
+                visited[mid] = true;
+            }
+            path.push(next);
+            visited[next] = true;
         }
-
+        return path;
     }
 
+    function loadPattern(p) {
+        clearBoard();
+        p.forEach(n => addPoint(n));
+        renderFrame();
+        window.scrollTo({top: 0, behavior: 'smooth'});
+    }
 
+    function resetHistory() {
+        if(confirm("سيتم مسح سجل الأخطاء بالكامل. هل أنت متأكد؟")) {
+            wrongPaths = [];
+            localStorage.removeItem('lock_detective_pro_data');
+            updateHistoryUI();
+            generateMassPatterns();
+        }
+    }
 
-    // تشغيل أولي
+    // --- ✨ تكامل Gemini API ---
 
+    async function callGemini(prompt) {
+        aiPanel.style.display = 'block';
+        aiContent.innerHTML = '<div class="loading-shimmer"></div><div class="loading-shimmer" style="width:80%"></div><div class="loading-shimmer" style="width:60%"></div>';
+        
+        try {
+            const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-preview-09-2025:generateContent?key=${apiKey}`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    contents: [{ parts: [{ text: prompt }] }],
+                    generationConfig: { temperature: 0.7 }
+                })
+            });
+            const data = await response.json();
+            return data.candidates?.[0]?.content?.parts?.[0]?.text || "عذراً، لم أتمكن من تحليل البيانات حالياً.";
+        } catch (e) {
+            return "حدث خطأ أثناء الاتصال بالذكاء الاصطناعي. يرجى التحقق من الإنترنت.";
+        }
+    }
+
+    async function runGeminiAnalysis() {
+        if (wrongPaths.length < 3) {
+            alert("يرجى تسجيل 3 محاولات فاشلة على الأقل ليتمكن Gemini من تحليل نمط تفكيرك.");
+            return;
+        }
+
+        const prompt = `أنا أحاول تذكر نمط قفل هاتفي الـ 3x3. الأنماط التي جربتها وفشلت هي: [${wrongPaths.join(' , ')}]. 
+        بناءً على هذه الأخطاء، قم بالآتي:
+        1. حدد "المنطقة العمياء" (النقاط التي أتجنبها دائماً).
+        2. هل أنماطي الفاشلة تميل لأن تكون معقدة أم بسيطة؟
+        3. اقترح 3 مسارات حركية (أرقام من 0-8) تكون بعيدة تماماً عن أسلوبي المعتاد ولكنها منطقية وسهلة الحفظ.
+        تحدث بلهجة محفزة وذكية باللغة العربية.`;
+
+        const result = await callGemini(prompt);
+        aiContent.innerText = result;
+    }
+
+    async function getMuscleMemoryExercise() {
+        const lastAttempt = currentPath.length > 0 ? currentPath.join(' -> ') : "لا يوجد نمط حالي";
+        const prompt = `بناءً على محاولتي الأخيرة في رسم النمط: [${lastAttempt}]. 
+        قم بتوليد تمرين "ذاكرة عضلية" قصير (Mindfulness Exercise). 
+        صف لي كيف يجب أن تتحرك أصابعي، وما هي الأشكال التي قد تشبهها الحركة (مثلاً حرف L أو شكل Z). 
+        ساعدني في تخيل الحركة التلقائية التي قد تكون يدي قد اعتادت عليها. 
+        أجب باللغة العربية باختصار.`;
+
+        const result = await callGemini(prompt);
+        aiContent.innerText = result;
+    }
+
+    // التشغيل الأولي
     updateHistoryUI();
-
-    generateSmartSuggestions();
-
-
+    generateMassPatterns();
 
 </script>
 
-
-
 </body>
-
 </html>
-
-ظبط جزء الاقترحات و حوش الذكاء الاصطناعي طالما هو مش موجود اصلا  زي مانا طلبت منك اني مش عايز منظر و خلاص و خلي ازار الاقترحات احسن ال زر الفوق خلي اني ممكن اقترح رمز جديدو ال هو عطهولى ولا صح ولا غلط و الجزء بتاع الاقترحات ال تحت خليه يعرض الشكل بتاع النمط ال هو جايبه حط مميزات كتير تختصر عليا و قت و كمان عايزه يقترح عليا في مكان تاني يعرضلي ١٠٠ نمط كل مره ادوس ريفرش يحدث الانماط و كده انا عايز حاجه تساعدني بجد ما تركز معايا بقى حط مميزات تساعدني و زود على انا قولته
