@@ -177,6 +177,7 @@
             <button class="btn" onclick="clearBoard()">🧹 مسح اللوحة</button>
             <button class="btn btn-ai" onclick="runGeminiAnalysis()">✨ تحليل ✨ استنتاج Gemini الذكي</button>
             <button class="btn btn-ai" style="background: #30363d; border: 1px solid var(--ai-glow);" onclick="getMuscleMemoryExercise()">✨ تمرين الذاكرة العضلية</button>
+            <button class="btn btn-ai" style="background: #a371f7; color: #fff;" onclick="generateRandomOnBoard()">🎲 توليد نمط عشوائي على اللوحه </button>
         </div>
 
         <div id="ai-panel">
@@ -455,7 +456,51 @@
             generateMassPatterns();
         }
     }
+function generateRandomOnBoard() {
+    // 1. مسح اللوحة الحالية تماماً
+    clearBoard();
 
+    // 2. توليد طول عشوائي للنمط (من 4 إلى 7 نقاط مثلاً)
+    const length = Math.floor(Math.random() * 4) + 4;
+    let path = [Math.floor(Math.random() * 9)];
+    let visited = new Array(9).fill(false);
+    visited[path[0]] = true;
+
+    // 3. بناء مسار عشوائي منطقي
+    while (path.length < length) {
+        let last = path[path.length - 1];
+        let options = [0,1,2,3,4,5,6,7,8].filter(n => !visited[n]);
+        
+        if (options.length === 0) break;
+
+        // ترتيب الخيارات حسب القرب لضمان نمط قابل للرسم باليد
+        options.sort((a, b) => {
+            const distA = Math.hypot((a%3)-(last%3), Math.floor(a/3)-Math.floor(last/3));
+            const distB = Math.hypot((b%3)-(last%3), Math.floor(b/3)-Math.floor(last/3));
+            return distA - distB;
+        });
+
+        // اختيار نقطة من أقرب نقطتين متاحتين
+        let next = options[Math.floor(Math.random() * Math.min(2, options.length))];
+        
+        // التعامل مع النقاط المتوسطة (القفز فوق نقطة)
+        let mid = getMidPoint(last, next);
+        if (mid !== null && !visited[mid]) {
+            path.push(mid);
+            visited[mid] = true;
+        }
+        
+        path.push(next);
+        visited[next] = true;
+    }
+
+    // 4. وضع النمط المولد في المسار الحالي ورسمه
+    path.forEach(node => addPoint(node));
+    renderFrame();
+    
+    // تنبيه بسيط
+    console.log("تم توليد نمط عشوائي: " + path.join(' -> '));
+}
     // --- ✨ تكامل Gemini API ---
 
     async function callGemini(prompt) {
