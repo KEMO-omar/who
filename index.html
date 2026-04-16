@@ -457,49 +457,75 @@
         }
     }
 function generateRandomOnBoard() {
-    // 1. مسح اللوحة الحالية تماماً
-    clearBoard();
+    let isUnique = false;
+    let path = [];
+    let safetyCounter = 0;
 
-    // 2. توليد طول عشوائي للنمط (من 4 إلى 7 نقاط مثلاً)
-    const length = Math.floor(Math.random() * 4) + 4;
-    let path = [Math.floor(Math.random() * 9)];
-    let visited = new Array(9).fill(false);
-    visited[path[0]] = true;
-
-    // 3. بناء مسار عشوائي منطقي
-    while (path.length < length) {
-        let last = path[path.length - 1];
-        let options = [0,1,2,3,4,5,6,7,8].filter(n => !visited[n]);
+    // الحلقة تضمن عدم اختيار نمط موجود في قائمة wrongPaths
+    while (!isUnique && safetyCounter < 500) {
+        path = [];
+        // 1. توليد طول عشوائي للنمط (من 4 إلى 9 نقاط)
+        const targetLength = Math.floor(Math.random() * 6) + 4; 
         
-        if (options.length === 0) break;
-
-        // ترتيب الخيارات حسب القرب لضمان نمط قابل للرسم باليد
-        options.sort((a, b) => {
-            const distA = Math.hypot((a%3)-(last%3), Math.floor(a/3)-Math.floor(last/3));
-            const distB = Math.hypot((b%3)-(last%3), Math.floor(b/3)-Math.floor(last/3));
-            return distA - distB;
-        });
-
-        // اختيار نقطة من أقرب نقطتين متاحتين
-        let next = options[Math.floor(Math.random() * Math.min(2, options.length))];
+        let currentPoint = Math.floor(Math.random() * 9);
+        path.push(currentPoint);
         
-        // التعامل مع النقاط المتوسطة (القفز فوق نقطة)
-        let mid = getMidPoint(last, next);
-        if (mid !== null && !visited[mid]) {
-            path.push(mid);
-            visited[mid] = true;
+        let visited = new Array(9).fill(false);
+        visited[currentPoint] = true;
+
+        // 2. بناء مسار عشوائي منطقي
+        while (path.length < targetLength) {
+            let last = path[path.length - 1];
+            let options = [0, 1, 2, 3, 4, 5, 6, 7, 8].filter(n => !visited[n]);
+
+            if (options.length === 0) break;
+
+            // ترتيب الخيارات حسب القرب لضمان نمط انسيابي
+            options.sort((a, b) => {
+                const distA = Math.hypot((a % 3) - (last % 3), Math.floor(a / 3) - Math.floor(last / 3));
+                const distB = Math.hypot((b % 3) - (last % 3), Math.floor(b / 3) - Math.floor(last / 3));
+                return distA - distB;
+            });
+
+            // اختيار نقطة من أقرب نقطتين متاحتين
+            let next = options[Math.floor(Math.random() * Math.min(2, options.length))];
+
+            // التعامل مع النقاط المتوسطة (القفز فوق نقطة)
+            let mid = typeof getMidPoint === 'function' ? getMidPoint(last, next) : null;
+            if (mid !== null && !visited[mid]) {
+                // إذا كان المسار سيصل للطول المطلوب بإضافة النقطة المتوسطة
+                if (path.length < targetLength) {
+                    path.push(mid);
+                    visited[mid] = true;
+                }
+            }
+
+            // إضافة النقطة التالية إذا لم يصل للطول بعد
+            if (path.length < targetLength) {
+                path.push(next);
+                visited[next] = true;
+            } else {
+                break;
+            }
         }
-        
-        path.push(next);
-        visited[next] = true;
+
+        // 3. التأكد من أن النمط الناتج فريد وغير مسجل كخطأ
+        const pathString = path.join('');
+        if (!wrongPaths.includes(pathString) && path.length >= 4) {
+            isUnique = true;
+        }
+        safetyCounter++;
     }
 
-    // 4. وضع النمط المولد في المسار الحالي ورسمه
-    path.forEach(node => addPoint(node));
-    renderFrame();
-    
-    // تنبيه بسيط
-    console.log("تم توليد نمط عشوائي: " + path.join(' -> '));
+    // 4. رسم النمط على اللوحة إذا كان فريداً
+    if (isUnique) {
+        clearBoard();
+        path.forEach(node => addPoint(node));
+        renderFrame();
+        console.log("تم توليد نمط فريد بطول " + path.length + ": " + path.join(' -> '));
+    } else {
+        console.log("تعذر العثور على نمط فريد جديد.");
+    }
 }
     // --- ✨ تكامل Gemini API ---
 
